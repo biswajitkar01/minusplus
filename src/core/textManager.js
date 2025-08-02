@@ -99,6 +99,7 @@ class TextManager {
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
+            // Let CSS handle scrollbar visibility
         });
 
         input.addEventListener('blur', () => {
@@ -159,10 +160,12 @@ class TextManager {
         element.resultElement.textContent = `= ${calculation.formatted}`;
         element.resultElement.style.display = 'block';
 
-        // Position result below input
-        const inputRect = element.input.getBoundingClientRect();
-        element.resultElement.style.left = inputRect.left + 'px';
-        element.resultElement.style.top = (inputRect.bottom + 5) + 'px';
+        // Position result below input using canvas coordinate system
+        const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
+        // Use the actual rendered height of the input, not its scroll height
+        const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
+        element.resultElement.style.left = screenPos.x + 'px';
+        element.resultElement.style.top = (screenPos.y + inputHeight + 5) + 'px';
 
         // Add summary tooltip for complex calculations
         if (calculation.numbers.length > 2) {
@@ -178,20 +181,56 @@ class TextManager {
     }
 
     autoResize(textarea) {
-        // Reset height to measure content
-        textarea.style.height = 'auto';
-
-        // Set height based on content
-        const newHeight = Math.max(40, textarea.scrollHeight);
-        textarea.style.height = newHeight + 'px';
-
-        // Auto-width for horizontal content
         const text = textarea.value;
-        if (text.includes(' ') && !text.includes('\n')) {
-            const testElement = this.createMeasureElement(text);
-            const width = Math.max(120, testElement.offsetWidth + 20);
-            textarea.style.width = width + 'px';
-            testElement.remove();
+        const hasManualLineBreaks = text.includes('\n');
+        const maxChars = 500;
+
+        // Reset dimensions to measure content
+        textarea.style.height = 'auto';
+        textarea.style.width = 'auto';
+
+        if (!hasManualLineBreaks) {
+            // Single line content - expand horizontally until max chars
+            if (text.length <= maxChars) {
+                // Calculate width needed for the text
+                const testElement = this.createMeasureElement(text || 'Enter numbers...');
+                const neededWidth = Math.max(120, testElement.offsetWidth + 20);
+                textarea.style.width = neededWidth + 'px';
+                textarea.style.height = '40px'; // Single line height
+                textarea.style.overflowX = 'auto'; // Allow horizontal scrolling if needed
+                textarea.style.overflowY = 'hidden'; // No vertical scrolling for single line
+                textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                testElement.remove();
+            } else {
+                // Content exceeds max chars - make it scrollable horizontally
+                const testElement = this.createMeasureElement('A'.repeat(maxChars));
+                const maxWidth = testElement.offsetWidth + 20;
+                textarea.style.width = maxWidth + 'px';
+                textarea.style.height = '40px';
+                textarea.style.overflowX = 'scroll';
+                textarea.style.overflowY = 'hidden';
+                textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                testElement.remove();
+            }
+        } else {
+            // Multi-line content with manual breaks - expand vertically
+            const maxLines = 50;
+            const lineHeight = 24;
+            const minHeight = 40;
+            const maxHeight = maxLines * lineHeight;
+
+            const newHeight = Math.min(maxHeight, Math.max(minHeight, textarea.scrollHeight));
+            textarea.style.height = newHeight + 'px';
+            textarea.style.width = '120px'; // Fixed width for vertical content
+            textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping for multi-line
+
+            // Enable vertical scrolling if content exceeds max height
+            if (textarea.scrollHeight > maxHeight) {
+                textarea.style.overflowY = 'scroll'; // Use scroll to ensure scrollbar shows when focused
+            } else {
+                textarea.style.overflowY = 'hidden';
+            }
+            textarea.style.overflowX = 'hidden';
         }
     }
 
@@ -221,11 +260,11 @@ class TextManager {
         element.input.style.left = screenPos.x + 'px';
         element.input.style.top = screenPos.y + 'px';
 
-        // Update result position if visible
+        // Update result position if visible - use actual rendered height, not scroll height
         if (element.resultElement && element.resultElement.style.display !== 'none') {
-            const inputRect = element.input.getBoundingClientRect();
-            element.resultElement.style.left = inputRect.left + 'px';
-            element.resultElement.style.top = (inputRect.bottom + 5) + 'px';
+            const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
+            element.resultElement.style.left = screenPos.x + 'px';
+            element.resultElement.style.top = (screenPos.y + inputHeight + 5) + 'px';
         }
     }
 
@@ -263,6 +302,32 @@ class TextManager {
         if (this.activeInput) {
             this.activeInput.blur();
         }
+    }
+
+    // Clear all calculations from the canvas
+    clearAllCalculations() {
+        console.log('Clearing all calculations...');
+
+        // Get all element IDs to avoid modifying map during iteration
+        const elementIds = Array.from(this.textElements.keys());
+
+        // Remove each element
+        elementIds.forEach(id => {
+            this.removeElement(id);
+        });
+
+        // Clear active input
+        this.activeInput = null;
+
+        // Clear canvas elements
+        this.canvas.elements.clear();
+
+        // Force canvas re-render
+        this.canvas.isDirty = true;
+
+        console.log(`Cleared ${elementIds.length} calculations`);
+
+        return elementIds.length;
     }
 
     // Object pooling for performance
@@ -342,6 +407,9 @@ class TextManager {
         for (const elementData of elements) {
             const element = this.createTextInput(elementData.worldX, elementData.worldY);
             element.input.value = elementData.text || '';
+
+            // Trigger auto-resize to ensure proper sizing after restoration
+            this.autoResize(element.input);
 
             // Restore calculation if present
             if (elementData.text) {

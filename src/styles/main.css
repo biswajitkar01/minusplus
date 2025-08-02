@@ -207,6 +207,45 @@ body {
     display: flex;
 }
 
+/* Clear all button */
+.clear-all-button {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: calc(var(--spacing-lg) + 50px);
+    /* Position to the left of shortcuts button */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all var(--transition-fast);
+    display: flex;
+    /* Force visible for debugging */
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    pointer-events: auto;
+}
+
+.clear-all-button:hover {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
+    transform: scale(1.05);
+}
+
+.clear-all-button:active {
+    transform: scale(0.95);
+}
+
+.clear-all-button.visible {
+    display: flex;
+}
+
 /* Shortcuts popup */
 .shortcuts-popup {
     position: fixed;
@@ -222,6 +261,8 @@ body {
     min-width: 280px;
     transition: all var(--transition-normal);
     backdrop-filter: blur(10px);
+    display: block;
+    /* Always display, control visibility with opacity */
 }
 
 .shortcuts-popup.hidden {
@@ -457,6 +498,23 @@ body {
 
     .help-indicator .shortcuts {
         font-size: var(--font-size-xs);
+    }
+
+    .shortcuts-button,
+    .clear-all-button {
+        top: var(--spacing-md);
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .clear-all-button {
+        right: calc(var(--spacing-md) + 46px);
+        /* Adjust for smaller mobile spacing */
+    }
+
+    .shortcuts-button {
+        right: var(--spacing-md);
     }
 
     .canvas-text-input {

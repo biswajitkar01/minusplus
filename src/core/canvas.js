@@ -26,6 +26,7 @@ class InfiniteCanvas {
 
     init() {
         this.setupCanvas();
+        this.resetView(); // Always start with centered view
         this.startRenderLoop();
         console.log('Infinite canvas initialized');
     }
@@ -45,14 +46,15 @@ class InfiniteCanvas {
         this.canvas.style.width = this.viewport.width + 'px';
         this.canvas.style.height = this.viewport.height + 'px';
 
+        // Force re-render after resize to fix grid alignment
+        this.isDirty = true;
+
         console.log('Canvas setup:', {
             viewport: { width: this.viewport.width, height: this.viewport.height },
             canvas: { width: this.canvas.width, height: this.canvas.height },
             dpr: dpr
         });
-    }
-
-    startRenderLoop() {
+    } startRenderLoop() {
         const render = () => {
             if (this.isDirty) {
                 this.render();
@@ -84,35 +86,76 @@ class InfiniteCanvas {
     }
 
     drawGrid() {
-        // Use a fixed grid size that doesn't scale with zoom to avoid overlapping patterns
-        const baseGridSize = 20; // Fixed grid size in pixels
+        // Adaptive grid system - use different grid sizes based on zoom level
+        let baseGridSize = 30; // Base grid size in world units (reduced from 50)
+        let opacity = 0.08;
 
-        // Calculate offset to keep grid aligned with world coordinates
-        const offsetX = ((-this.viewport.x * this.viewport.zoom) % baseGridSize + baseGridSize) % baseGridSize;
-        const offsetY = ((-this.viewport.y * this.viewport.zoom) % baseGridSize + baseGridSize) % baseGridSize;
+        // When zoomed out, use larger grid spacing
+        if (this.viewport.zoom < 0.5) {
+            baseGridSize = 120; // Reduced from 200
+            opacity = 0.06;
+        } else if (this.viewport.zoom < 1) {
+            baseGridSize = 60; // Reduced from 100
+            opacity = 0.07;
+        }
 
-        // Set grid style - very subtle
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        this.ctx.lineWidth = 0.5;
+        // When zoomed in, add finer grid
+        const screenGridSize = baseGridSize * this.viewport.zoom;
 
-        // Use save/restore to ensure we don't affect other drawing
         this.ctx.save();
-
-        // Draw vertical lines - cover entire width with generous margins
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+        this.ctx.lineWidth = 1;
         this.ctx.beginPath();
-        for (let x = offsetX - baseGridSize * 2; x <= this.viewport.width + baseGridSize * 2; x += baseGridSize) {
-            this.ctx.moveTo(Math.floor(x) + 0.5, 0);
-            this.ctx.lineTo(Math.floor(x) + 0.5, this.viewport.height);
+
+        // Calculate the canvas-space coordinates of the world origin (0,0)
+        const originX = -this.viewport.x * this.viewport.zoom;
+        const originY = -this.viewport.y * this.viewport.zoom;
+
+        // Calculate the offset for the first grid line using modulo
+        const startX = originX % screenGridSize;
+        const startY = originY % screenGridSize;
+
+        // Draw vertical lines across the entire viewport
+        for (let x = startX; x < this.viewport.width; x += screenGridSize) {
+            const lineX = Math.floor(x) + 0.5;
+            this.ctx.moveTo(lineX, 0);
+            this.ctx.lineTo(lineX, this.viewport.height);
         }
+
+        // Draw horizontal lines across the entire viewport
+        for (let y = startY; y < this.viewport.height; y += screenGridSize) {
+            const lineY = Math.floor(y) + 0.5;
+            this.ctx.moveTo(0, lineY);
+            this.ctx.lineTo(this.viewport.width, lineY);
+        }
+
         this.ctx.stroke();
 
-        // Draw horizontal lines - cover entire height with generous margins
-        this.ctx.beginPath();
-        for (let y = offsetY - baseGridSize * 2; y <= this.viewport.height + baseGridSize * 2; y += baseGridSize) {
-            this.ctx.moveTo(0, Math.floor(y) + 0.5);
-            this.ctx.lineTo(this.viewport.width, Math.floor(y) + 0.5);
+        // Add fine grid when zoomed in
+        if (this.viewport.zoom > 2) {
+            const fineGridSize = (baseGridSize / 5) * this.viewport.zoom;
+            if (fineGridSize >= 8) { // Only show if not too dense
+                this.ctx.strokeStyle = `rgba(255, 255, 255, 0.03)`;
+                this.ctx.beginPath();
+
+                const fineStartX = originX % fineGridSize;
+                const fineStartY = originY % fineGridSize;
+
+                for (let x = fineStartX; x < this.viewport.width; x += fineGridSize) {
+                    const lineX = Math.floor(x) + 0.5;
+                    this.ctx.moveTo(lineX, 0);
+                    this.ctx.lineTo(lineX, this.viewport.height);
+                }
+
+                for (let y = fineStartY; y < this.viewport.height; y += fineGridSize) {
+                    const lineY = Math.floor(y) + 0.5;
+                    this.ctx.moveTo(0, lineY);
+                    this.ctx.lineTo(this.viewport.width, lineY);
+                }
+
+                this.ctx.stroke();
+            }
         }
-        this.ctx.stroke();
 
         this.ctx.restore();
     }
@@ -163,7 +206,9 @@ class InfiniteCanvas {
 
     zoom(factor, centerX, centerY) {
         const oldZoom = this.viewport.zoom;
-        const newZoom = Math.max(0.1, Math.min(5, oldZoom * factor));
+        // Make zoom more gradual - reduce sensitivity
+        const adjustedFactor = factor > 1 ? 1 + (factor - 1) * 0.5 : 1 - (1 - factor) * 0.5;
+        const newZoom = Math.max(0.1, Math.min(5, oldZoom * adjustedFactor));
 
         if (newZoom !== oldZoom) {
             // Zoom towards cursor position
@@ -212,10 +257,12 @@ class InfiniteCanvas {
     }
 
     resetView() {
+        // Reset to centered view with grid-aligned position
         this.viewport.x = 0;
         this.viewport.y = 0;
         this.viewport.zoom = 1;
         this.isDirty = true;
+        console.log('View reset to center');
     }
 
     getViewport() {
@@ -229,7 +276,9 @@ class InfiniteCanvas {
 
     handleResize() {
         this.setupCanvas();
+        // Force a complete re-render to fix any grid alignment issues
         this.isDirty = true;
+        console.log('Canvas resized and grid reset');
     }
 
     destroy() {

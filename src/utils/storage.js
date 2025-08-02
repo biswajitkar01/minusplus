@@ -364,6 +364,11 @@ class StorageManager {
         }
     }
 
+    // Alias for clearing canvas state specifically
+    clearCanvasState() {
+        return this.clearStorage();
+    }
+
     // Cleanup
     destroy() {
         this.stopAutoSave();

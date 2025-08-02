@@ -23,15 +23,13 @@ class MinusPlusApp {
             this.clipboardManager = new ClipboardManager();
             this.highlighter = new TextHighlighter();
             this.storage = new StorageManager();
-
+            // Hide help indicator after first interaction
+            this.setupHelpIndicator();
             // Setup event coordination
             this.setupEventHandlers();
 
             // Load previous state if available
             await this.loadPreviousState();
-
-            // Hide help indicator after first interaction
-            this.setupHelpIndicator();
 
             console.log('MinusPlus Calculator initialized successfully');
         } catch (error) {
@@ -137,6 +135,8 @@ class MinusPlusApp {
                     case '0':
                         e.preventDefault();
                         this.canvas.resetView();
+                        // Update text element positions after canvas reset
+                        this.textManager.onCanvasTransform();
                         break;
                     case 's':
                         e.preventDefault();
@@ -162,12 +162,22 @@ class MinusPlusApp {
 
         // Shortcuts button functionality
         this.setupShortcutsButton();
+
+        // Clear all button functionality
+        this.setupClearAllButton();
     }
 
     setupHelpIndicator() {
         this.helpIndicator = document.querySelector('.help-indicator');
         this.shortcutsButton = document.querySelector('#shortcuts-btn');
         this.shortcutsPopup = document.querySelector('#shortcuts-popup');
+        this.clearAllButton = document.querySelector('#clear-all-btn');
+
+        console.log('Elements found in setupHelpIndicator:');
+        console.log('- Help indicator:', !!this.helpIndicator);
+        console.log('- Shortcuts button:', !!this.shortcutsButton);
+        console.log('- Shortcuts popup:', !!this.shortcutsPopup);
+        console.log('- Clear all button:', !!this.clearAllButton);
 
         // Check if we should show help indicator
         setTimeout(() => {
@@ -176,7 +186,7 @@ class MinusPlusApp {
             if (!hasElements) {
                 this.helpIndicator?.classList.add('fade-in');
             } else {
-                // Hide help and show shortcuts button if we have elements
+                // Hide help and show action buttons if we have elements
                 this.hideHelpIndicator();
             }
         }, 500);
@@ -184,11 +194,17 @@ class MinusPlusApp {
 
     setupShortcutsButton() {
         // Elements are already selected in setupHelpIndicator
-        if (!this.shortcutsButton || !this.shortcutsPopup) return;
+        if (!this.shortcutsButton || !this.shortcutsPopup) {
+            console.error('Shortcuts button or popup not found!');
+            return;
+        }
+
+        console.log('Setting up shortcuts button functionality');
 
         // Toggle shortcuts popup
         this.shortcutsButton.addEventListener('click', (e) => {
             e.stopPropagation();
+            console.log('Shortcuts button clicked');
             this.toggleShortcutsPopup();
         });
 
@@ -207,20 +223,92 @@ class MinusPlusApp {
         });
     }
 
+    setupClearAllButton() {
+        console.log('Setting up clear all button...');
+
+        if (!this.clearAllButton) {
+            console.error('Clear all button not found in DOM!');
+            return;
+        }
+
+        console.log('Clear all button found:', this.clearAllButton);
+        console.log('Button visibility classes:', this.clearAllButton.className);
+        console.log('Button style display:', this.clearAllButton.style.display);
+
+        // Clear all calculations when button is clicked
+        this.clearAllButton.addEventListener('click', (e) => {
+            console.log('Clear all button clicked!');
+            e.stopPropagation();
+            e.preventDefault();
+            this.clearAllCalculations();
+        });
+
+        console.log('Clear all button event listener added');
+    }
+
+    clearAllCalculations() {
+        console.log('clearAllCalculations() called');
+
+        // Show confirmation if there are calculations to clear
+        const elementCount = this.textManager.textElements.size;
+        console.log('Current element count:', elementCount);
+
+        if (elementCount === 0) {
+            console.log('No calculations to clear');
+            alert('No calculations to clear!'); // Temporary debug alert
+            return;
+        }
+
+        // Simple confirmation
+        const confirmed = confirm(`Clear all ${elementCount} calculations? This cannot be undone.`);
+        console.log('User confirmed:', confirmed);
+
+        if (confirmed) {
+            // Clear all calculations
+            const clearedCount = this.textManager.clearAllCalculations();
+
+            // Clear storage
+            this.storage.clearCanvasState();
+
+            // Show help indicator again since canvas is empty
+            this.showHelpIndicator();
+
+            // Hide action buttons
+            this.clearAllButton.classList.remove('visible');
+            this.shortcutsButton.classList.remove('visible');
+
+            console.log(`Cleared ${clearedCount} calculations`);
+        }
+    }
+
+    showHelpIndicator() {
+        if (this.helpIndicator) {
+            this.helpIndicator.style.display = 'block';
+            this.helpIndicator.classList.remove('fade-out');
+            this.helpIndicator.classList.add('fade-in');
+        }
+    }
+
     toggleShortcutsPopup() {
+        console.log('Toggle shortcuts popup called');
         if (this.shortcutsPopup.classList.contains('visible')) {
+            console.log('Hiding popup');
             this.hideShortcutsPopup();
         } else {
+            console.log('Showing popup');
             this.showShortcutsPopup();
         }
     }
 
     showShortcutsPopup() {
+        console.log('Showing shortcuts popup');
         this.shortcutsPopup.classList.remove('hidden');
         this.shortcutsPopup.classList.add('visible');
+        this.shortcutsPopup.style.display = 'block'; // Ensure it's visible
     }
 
     hideShortcutsPopup() {
+        console.log('Hiding shortcuts popup');
         this.shortcutsPopup.classList.remove('visible');
         this.shortcutsPopup.classList.add('hidden');
     }
@@ -230,9 +318,12 @@ class MinusPlusApp {
             this.helpIndicator.classList.add('fade-out');
             setTimeout(() => {
                 this.helpIndicator.style.display = 'none';
-                // Show shortcuts button when help indicator is hidden
+                // Show action buttons when help indicator is hidden
                 if (this.shortcutsButton) {
                     this.shortcutsButton.classList.add('visible');
+                }
+                if (this.clearAllButton) {
+                    this.clearAllButton.classList.add('visible');
                 }
             }, 500);
         }
@@ -247,9 +338,15 @@ class MinusPlusApp {
                 // Hide help indicator if we have existing elements
                 this.hideHelpIndicator();
                 console.log('Previous state loaded successfully');
+            } else {
+                // No previous state - ensure we start with a centered, grid-aligned view
+                this.canvas.resetView();
+                console.log('No previous state - starting with centered view');
             }
         } catch (error) {
             console.warn('Failed to load previous state:', error);
+            // On error, also reset to center
+            this.canvas.resetView();
         }
     }
 
