@@ -1,0 +1,49 @@
+{
+    "name": "minusplus-calculator",
+    "version": "1.0.0",
+    "description": "Revolutionary calculator with infinite dark canvas interface",
+    "type": "module",
+    "main": "src/main.js",
+    "scripts": {
+        "dev": "vite src --port 3000 --open",
+        "build": "vite build src --outDir ../dist",
+        "preview": "vite preview --port 5000",
+        "serve": "python3 -m http.server 8000 -d src",
+        "serve-simple": "cd src && python3 -m http.server 8000",
+        "test": "echo 'No tests yet' && exit 0",
+        "lint": "echo 'No linting configured yet' && exit 0",
+        "format": "echo 'No formatting configured yet' && exit 0"
+    },
+    "keywords": [
+        "calculator",
+        "infinite-canvas",
+        "dark-theme",
+        "vanilla-javascript",
+        "high-performance",
+        "auto-calculation",
+        "clipboard",
+        "text-highlighting"
+    ],
+    "author": "MinusPlus Team",
+    "license": "MIT",
+    "homepage": "https://minusplus.app",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/biswajitkar01/minusplus.git"
+    },
+    "bugs": {
+        "url": "https://github.com/biswajitkar01/minusplus/issues"
+    },
+    "devDependencies": {
+        "vite": "^5.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "browserslist": [
+        "last 2 Chrome versions",
+        "last 2 Firefox versions",
+        "last 2 Safari versions",
+        "last 2 Edge versions"
+    ]
+}

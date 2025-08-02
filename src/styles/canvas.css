@@ -1,0 +1,377 @@
+/* Canvas-specific styles */
+/* High-performance canvas rendering and interactions */
+
+/* Canvas container optimizations */
+#main-canvas {
+    /* Hardware acceleration for smooth transformations */
+    transform: translateZ(0);
+    will-change: transform;
+
+    /* Disable image smoothing for crisp rendering */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+
+    /* Prevent touch actions that might interfere with panning */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Canvas states */
+#main-canvas.panning {
+    cursor: move !important;
+}
+
+#main-canvas.zooming {
+    cursor: zoom-in !important;
+}
+
+#main-canvas.loading {
+    opacity: 0.8;
+    cursor: wait !important;
+}
+
+/* Text input positioning and behavior on canvas */
+.canvas-text-input {
+    /* Ensure proper layering above canvas */
+    position: absolute;
+    z-index: var(--z-input);
+
+    /* Optimize for frequent position updates */
+    will-change: transform, left, top;
+
+    /* Prevent sub-pixel rendering issues */
+    transform: translateZ(0);
+
+    /* Smooth transitions for position updates */
+    transition: left 0.1s ease-out, top 0.1s ease-out;
+}
+
+/* Text input states on canvas */
+.canvas-text-input.dragging {
+    transition: none;
+    /* Disable transitions while dragging */
+    cursor: move;
+}
+
+.canvas-text-input.calculating {
+    background: rgba(0, 122, 204, 0.05);
+    border-color: var(--accent-blue);
+}
+
+.canvas-text-input.has-result {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 1px rgba(50, 205, 50, 0.2);
+}
+
+/* Calculation result positioning */
+.calculation-result {
+    /* Ensure proper positioning relative to input */
+    position: absolute;
+    z-index: var(--z-result);
+
+    /* Optimize for position updates */
+    will-change: transform, left, top;
+    transform: translateZ(0);
+
+    /* Smooth appearance */
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.calculation-result.entering {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.calculation-result.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.calculation-result.leaving {
+    opacity: 0;
+    transform: translateY(5px);
+}
+
+/* Grid overlay styles */
+.canvas-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--grid-opacity, 0.05);
+}
+
+/* Canvas element overlays */
+.canvas-element-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: var(--z-overlay);
+    border-radius: var(--radius-sm);
+    transition: opacity var(--transition-fast);
+}
+
+.canvas-element-overlay.highlight {
+    background: var(--highlight-primary);
+    opacity: 0.3;
+}
+
+.canvas-element-overlay.selection {
+    background: var(--accent-blue);
+    opacity: 0.2;
+    border: 1px solid var(--accent-blue);
+}
+
+/* Text selection highlighting on canvas */
+.text-highlight-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: transparent;
+    background: transparent;
+    border: transparent;
+    padding: var(--spacing-sm);
+    overflow: hidden;
+}
+
+/* Canvas performance optimizations */
+.canvas-optimized {
+    /* Force hardware acceleration */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* Viewport culling indicators (development only) */
+.canvas-element.out-of-viewport {
+    display: none;
+}
+
+.canvas-element.in-viewport {
+    display: block;
+}
+
+/* Touch-specific styles for mobile canvas interaction */
+@media (hover: none) and (pointer: coarse) {
+    #main-canvas {
+        cursor: default;
+    }
+
+    .canvas-text-input {
+        /* Larger touch targets on mobile */
+        min-height: 44px;
+        min-width: 120px;
+        font-size: 18px;
+        /* Prevent zoom on focus */
+    }
+
+    .calculation-result {
+        /* Larger touch targets for results */
+        padding: var(--spacing-sm) var(--spacing-md);
+        min-height: 36px;
+    }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    #main-canvas {
+        /* Ensure crisp rendering on retina displays */
+        image-rendering: -webkit-optimize-contrast;
+    }
+}
+
+/* Canvas loading states */
+.canvas-loading {
+    position: relative;
+}
+
+.canvas-loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 3px solid var(--border-default);
+    border-top-color: var(--accent-blue);
+    border-radius: 50%;
+    animation: canvas-spinner 0.8s linear infinite;
+    z-index: var(--z-overlay);
+}
+
+@keyframes canvas-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Canvas error states */
+.canvas-error {
+    position: relative;
+}
+
+.canvas-error::before {
+    content: '⚠';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: var(--accent-red);
+    z-index: var(--z-overlay);
+}
+
+/* Canvas debug mode (development) */
+.canvas-debug .canvas-text-input {
+    border: 2px dashed var(--accent-orange);
+}
+
+.canvas-debug .calculation-result {
+    border: 2px dashed var(--accent-green);
+}
+
+.canvas-debug .canvas-element-overlay.debug {
+    border: 1px solid var(--accent-red);
+    background: rgba(255, 68, 68, 0.1);
+}
+
+/* Pan and zoom indicators */
+.pan-indicator {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    left: var(--spacing-lg);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    z-index: var(--z-overlay);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.pan-indicator.visible {
+    opacity: 1;
+}
+
+.zoom-indicator {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    z-index: var(--z-overlay);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.zoom-indicator.visible {
+    opacity: 1;
+}
+
+/* Minimap (future feature) */
+.canvas-minimap {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 200px;
+    height: 150px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    z-index: var(--z-overlay);
+    opacity: 0.8;
+    transition: opacity var(--transition-fast);
+}
+
+.canvas-minimap:hover {
+    opacity: 1;
+}
+
+/* Canvas performance monitoring (development) */
+.canvas-fps {
+    position: fixed;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    z-index: var(--z-overlay);
+}
+
+/* Disable certain CSS features for better performance */
+.canvas-performance-mode * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* Canvas element animations */
+@keyframes element-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes element-disappear {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(5px);
+    }
+}
+
+.canvas-element.appearing {
+    animation: element-appear var(--transition-fast) ease-out;
+}
+
+.canvas-element.disappearing {
+    animation: element-disappear var(--transition-fast) ease-in;
+}
+
+/* Reduce animations for better performance on lower-end devices */
+@media (prefers-reduced-motion: reduce) {
+
+    .canvas-element.appearing,
+    .canvas-element.disappearing {
+        animation: none;
+    }
+
+    .calculation-result {
+        transition: opacity var(--transition-fast);
+    }
+}

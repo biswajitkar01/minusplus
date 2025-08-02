@@ -1,0 +1,359 @@
+/* Themes and color schemes */
+/* Dark theme (default) with optional theme variants */
+
+/* Default Dark Theme */
+:root {
+    /* Primary background colors */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --bg-overlay: rgba(42, 42, 42, 0.95);
+
+    /* Text colors */
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #666666;
+    --text-inverse: #1a1a1a;
+
+    /* Accent colors */
+    --accent-blue: #007acc;
+    --accent-blue-light: #40a9ff;
+    --accent-blue-dark: #005a9e;
+
+    --accent-green: #32cd32;
+    --accent-green-light: #52dd52;
+    --accent-green-dark: #228b22;
+
+    --accent-orange: #ffa500;
+    --accent-orange-light: #ffb732;
+    --accent-orange-dark: #e68a00;
+
+    --accent-red: #ff4444;
+    --accent-red-light: #ff6666;
+    --accent-red-dark: #cc3333;
+
+    --accent-purple: #8b5cf6;
+    --accent-yellow: #fbbf24;
+
+    /* Semantic colors */
+    --color-success: var(--accent-green);
+    --color-warning: var(--accent-orange);
+    --color-error: var(--accent-red);
+    --color-info: var(--accent-blue);
+
+    /* Border colors */
+    --border-default: rgba(255, 255, 255, 0.2);
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.3);
+    --border-focus: var(--accent-blue);
+    --border-error: var(--accent-red);
+    --border-success: var(--accent-green);
+
+    /* Highlight colors */
+    --highlight-primary: rgba(0, 122, 204, 0.3);
+    --highlight-secondary: rgba(255, 255, 255, 0.1);
+    --highlight-match: rgba(255, 165, 0, 0.3);
+    --highlight-result: rgba(50, 205, 50, 0.3);
+    --highlight-selection: rgba(0, 122, 204, 0.2);
+
+    /* Surface colors */
+    --surface-1: var(--bg-secondary);
+    --surface-2: var(--bg-tertiary);
+    --surface-3: #4a4a4a;
+
+    /* Grid and guide colors */
+    --grid-color: rgba(255, 255, 255, 0.05);
+    --grid-major: rgba(255, 255, 255, 0.1);
+    --guide-color: rgba(0, 122, 204, 0.3);
+}
+
+/* High Contrast Dark Theme */
+[data-theme="high-contrast-dark"] {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #333333;
+
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #999999;
+
+    --border-default: rgba(255, 255, 255, 0.5);
+    --border-light: rgba(255, 255, 255, 0.3);
+    --border-strong: rgba(255, 255, 255, 0.7);
+
+    --highlight-primary: rgba(0, 150, 255, 0.5);
+    --highlight-match: rgba(255, 200, 0, 0.5);
+    --highlight-result: rgba(0, 255, 0, 0.5);
+
+    --grid-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Blue Dark Theme */
+[data-theme="blue-dark"] {
+    --bg-primary: #0d1421;
+    --bg-secondary: #1e2329;
+    --bg-tertiary: #2b3139;
+
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+
+    --border-default: rgba(59, 130, 246, 0.2);
+    --highlight-primary: rgba(59, 130, 246, 0.3);
+}
+
+/* Green Dark Theme */
+[data-theme="green-dark"] {
+    --bg-primary: #0f1419;
+    --bg-secondary: #1a2e1a;
+    --bg-tertiary: #2d3e2d;
+
+    --accent-green: #00d484;
+    --accent-blue: #00a8ff;
+    --accent-orange: #ff9500;
+    --accent-red: #ff5555;
+
+    --border-default: rgba(0, 212, 132, 0.2);
+    --highlight-primary: rgba(0, 212, 132, 0.3);
+    --highlight-result: rgba(0, 212, 132, 0.4);
+}
+
+/* Purple Dark Theme */
+[data-theme="purple-dark"] {
+    --bg-primary: #1a0d1f;
+    --bg-secondary: #2d1b3d;
+    --bg-tertiary: #3d2952;
+
+    --accent-purple: #a855f7;
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+
+    --border-default: rgba(168, 85, 247, 0.2);
+    --highlight-primary: rgba(168, 85, 247, 0.3);
+}
+
+/* Minimal Dark Theme */
+[data-theme="minimal-dark"] {
+    --bg-primary: #181818;
+    --bg-secondary: #202020;
+    --bg-tertiary: #282828;
+
+    --text-secondary: #a0a0a0;
+    --text-muted: #707070;
+
+    --border-default: rgba(255, 255, 255, 0.15);
+    --border-light: rgba(255, 255, 255, 0.08);
+
+    --grid-color: rgba(255, 255, 255, 0.03);
+
+    /* Subtle accents */
+    --accent-blue: #6ba7e8;
+    --accent-green: #7cc87c;
+    --accent-orange: #e8a563;
+    --accent-red: #e87979;
+}
+
+/* OLED True Black Theme */
+[data-theme="oled-black"] {
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --bg-tertiary: #111111;
+    --bg-overlay: rgba(0, 0, 0, 0.95);
+
+    --text-primary: #ffffff;
+    --text-secondary: #bbbbbb;
+    --text-muted: #777777;
+
+    --border-default: rgba(255, 255, 255, 0.2);
+    --grid-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Theme-specific input styles */
+[data-theme="high-contrast-dark"] .canvas-text-input {
+    border-width: 2px;
+}
+
+[data-theme="high-contrast-dark"] .calculation-result {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+[data-theme="minimal-dark"] .canvas-text-input {
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="minimal-dark"] .calculation-result {
+    border: none;
+    background: rgba(124, 200, 124, 0.15);
+}
+
+/* Theme transitions */
+.theme-transition * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* System theme preference detection */
+@media (prefers-color-scheme: dark) {
+    /* Default dark theme is already applied */
+}
+
+@media (prefers-color-scheme: light) {
+    /* Light theme would go here - not implemented for this dark-focused app */
+    /* Keep dark theme even if system prefers light */
+}
+
+/* Accessibility: High contrast preference */
+@media (prefers-contrast: high) {
+    :root {
+        --bg-primary: #000000;
+        --bg-secondary: #1a1a1a;
+        --text-primary: #ffffff;
+        --text-secondary: #ffffff;
+        --border-default: rgba(255, 255, 255, 0.7);
+        --border-strong: rgba(255, 255, 255, 1);
+    }
+}
+
+/* Accessibility: Reduced transparency preference */
+@media (prefers-reduced-transparency: reduce) {
+    :root {
+        --bg-overlay: var(--bg-secondary);
+        --highlight-primary: var(--accent-blue);
+        --highlight-match: var(--accent-orange);
+        --highlight-result: var(--accent-green);
+        --border-default: rgb(255, 255, 255);
+    }
+}
+
+/* Color scheme utilities */
+.color-primary {
+    color: var(--text-primary);
+}
+
+.color-secondary {
+    color: var(--text-secondary);
+}
+
+.color-muted {
+    color: var(--text-muted);
+}
+
+.color-success {
+    color: var(--color-success);
+}
+
+.color-warning {
+    color: var(--color-warning);
+}
+
+.color-error {
+    color: var(--color-error);
+}
+
+.color-info {
+    color: var(--color-info);
+}
+
+.bg-primary {
+    background-color: var(--bg-primary);
+}
+
+.bg-secondary {
+    background-color: var(--bg-secondary);
+}
+
+.bg-tertiary {
+    background-color: var(--bg-tertiary);
+}
+
+.bg-success {
+    background-color: var(--color-success);
+}
+
+.bg-warning {
+    background-color: var(--color-warning);
+}
+
+.bg-error {
+    background-color: var(--color-error);
+}
+
+.bg-info {
+    background-color: var(--color-info);
+}
+
+.border-primary {
+    border-color: var(--border-default);
+}
+
+.border-light {
+    border-color: var(--border-light);
+}
+
+.border-strong {
+    border-color: var(--border-strong);
+}
+
+.border-focus {
+    border-color: var(--border-focus);
+}
+
+.border-success {
+    border-color: var(--border-success);
+}
+
+.border-error {
+    border-color: var(--border-error);
+}
+
+/* Theme selector styles (for future theme switcher) */
+.theme-selector {
+    position: fixed;
+    top: var(--spacing-lg);
+    left: var(--spacing-lg);
+    z-index: var(--z-modal);
+    background: var(--bg-overlay);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: none;
+    /* Hidden by default */
+}
+
+.theme-option {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.theme-option:hover {
+    background: var(--surface-1);
+    border-color: var(--border-default);
+}
+
+.theme-option.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--text-inverse);
+}
+
+/* Print theme override */
+@media print {
+    * {
+        background: white !important;
+        color: black !important;
+        border-color: black !important;
+    }
+}
