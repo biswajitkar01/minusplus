@@ -18,25 +18,44 @@ Revolutionary calculator with infinite dark canvas interface. Click anywhere to 
 
 ## 🚀 Quick Start
 
-### Option 1: Simple Python Server (Recommended)
+### Live Demo
+
+Visit [minusplus.app](https://biswajitkar01.github.io/minusplus) to try it online!
+
+### Local Development
+
+1. Clone the repository:
 
 ```bash
-cd src
+git clone https://github.com/biswajitkar01/minusplus.git
+cd minusplus
+```
+
+2. Start the development server:
+
+```bash
+npm run dev
+# or
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000 in your browser.
+3. Open your browser to `http://localhost:8000`
 
-### Option 2: Using Node.js (Development)
+### GitHub Pages Deployment
 
-```bash
-npm install
-npm run dev
+This project is set up for GitHub Pages deployment:
+
+1. Push your changes to the `main` branch
+2. Go to your repository Settings → Pages
+3. Set Source to "Deploy from a branch"
+4. Select branch: `main` and folder: `/ (root)`
+5. Your site will be available at `https://yourusername.github.io/minusplus`
+
+The `index.html` file is in the root directory for GitHub Pages compatibility.
+
+## 📁 Project Structure
+
 ```
-
-### Option 3: Direct File Access
-
-Simply open `src/index.html` in a modern web browser.
 
 ## 🎯 How to Use
 
@@ -53,24 +72,30 @@ Simply open `src/index.html` in a modern web browser.
 ### Vertical Column Addition
 
 ```
+
 10
 20
 30
 = 60
+
 ```
 
 ### Horizontal Sequence Addition
 
 ```
+
 25 30 45 = 100
+
 ```
 
 ### Currency Support
 
 ```
+
 $1,234.56
 $2,345.67
 = $3,580.23
+
 ```
 
 ## 🎨 Key Features
@@ -132,23 +157,25 @@ $2,345.67
 ## 📁 Project Structure
 
 ```
+
 src/
-├── core/                   # Core system modules
-│   ├── canvas.js          # Infinite canvas management
-│   ├── calculator.js      # Calculation engine
-│   ├── textManager.js     # Text input handling
-│   └── clipboardManager.js # Copy/paste operations
-├── utils/                 # Utility functions
-│   ├── highlighter.js     # Text highlighting system
-│   ├── storage.js         # Data persistence
-│   └── constants.js       # Configuration constants
-├── styles/                # CSS files
-│   ├── main.css          # Global styles
-│   ├── canvas.css        # Canvas-specific styles
-│   └── themes.css        # Dark theme variants
-├── main.js               # App initialization
-└── index.html            # Entry point
-```
+├── core/ # Core system modules
+│ ├── canvas.js # Infinite canvas management
+│ ├── calculator.js # Calculation engine
+│ ├── textManager.js # Text input handling
+│ └── clipboardManager.js # Copy/paste operations
+├── utils/ # Utility functions
+│ ├── highlighter.js # Text highlighting system
+│ ├── storage.js # Data persistence
+│ └── constants.js # Configuration constants
+├── styles/ # CSS files
+│ ├── main.css # Global styles
+│ ├── canvas.css # Canvas-specific styles
+│ └── themes.css # Dark theme variants
+├── main.js # App initialization
+└── index.html # Entry point
+
+````
 
 ## ⚙️ Configuration
 
@@ -164,7 +191,7 @@ STORAGE_CONFIG.AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
 // Text input behavior
 TEXT_CONFIG.CALCULATION_DEBOUNCE = 150; // ms
-```
+````
 
 ## 🎨 Customization
 
