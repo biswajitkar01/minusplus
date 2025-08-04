@@ -32,7 +32,8 @@ class CalculationEngine {
         // Detect calculation type
         if (cleanText.includes('\n')) {
             return this.calculateVerticalColumn(cleanText);
-        } else if (cleanText.includes(' ')) {
+        } else if (cleanText.includes(' ') || /[-+×*÷\/]/.test(cleanText)) {
+            // Check for spaces OR mathematical operators
             return this.calculateHorizontalSequence(cleanText);
         } else if (this.isNumber(cleanText)) {
             return this.createSingleNumberResult(cleanText);
@@ -62,6 +63,20 @@ class CalculationEngine {
 
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
+        // First try to parse as a mathematical expression (no spaces required)
+        const expressionResult = this.parseExpression([text]);
+        if (expressionResult && expressionResult.numbers.length > 1) {
+            return {
+                type: 'horizontal',
+                numbers: expressionResult.numbers,
+                result: expressionResult.result,
+                operation: expressionResult.operation,
+                formatted: this.formatResult(expressionResult.result),
+                original: text
+            };
+        }
+
+        // Fallback to space-separated parsing
         const parts = text.split(/\s+/);
         const result = this.parseExpression(parts);
 
@@ -81,6 +96,15 @@ class CalculationEngine {
 
     // Parse mathematical expression with operators
     parseExpression(parts) {
+        // If we have only one part, try to parse it as a mathematical expression
+        if (parts.length === 1) {
+            const mathResult = this.parseMathExpression(parts[0]);
+            if (mathResult) {
+                return mathResult;
+            }
+        }
+
+        // Original logic for space-separated parts
         const elements = [];
         let currentNumber = null;
         let lastOperator = '+'; // Default to addition
@@ -91,11 +115,11 @@ class CalculationEngine {
 
             // Check if this part contains an operator
             const operatorMatch = trimmed.match(/^([-+×*÷\/])(.*)$/) || trimmed.match(/^(.+?)([-+×*÷\/])$/);
-            
+
             if (operatorMatch) {
                 // Part contains an operator
                 const [, prefix, suffix] = operatorMatch;
-                
+
                 if (prefix && this.isNumber(prefix)) {
                     // Number before operator (e.g., "5+")
                     const num = this.parseNumber(prefix);
@@ -129,6 +153,114 @@ class CalculationEngine {
             return null;
         }
 
+        return this.calculateFromElements(elements);
+    }
+
+    // Parse mathematical expression without spaces (e.g., "2+3-1*4")
+    parseMathExpression(expression) {
+        const trimmed = expression.trim();
+        
+        // Check if this looks like a mathematical expression
+        if (!/[-+×*÷\/]/.test(trimmed)) {
+            return null; // No operators found
+        }
+
+        // Split the expression into numbers and operators
+        const tokens = this.tokenizeMathExpression(trimmed);
+        if (!tokens || tokens.length < 3) {
+            return null; // Need at least number-operator-number
+        }
+
+        // Convert tokens to elements format
+        const elements = [];
+        let currentOperator = '+'; // First number is always positive by default
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            
+            if (token.type === 'number') {
+                elements.push({ 
+                    type: 'number', 
+                    value: token.value, 
+                    operator: currentOperator 
+                });
+                currentOperator = '+'; // Reset for next
+            } else if (token.type === 'operator') {
+                currentOperator = this.normalizeOperator(token.value);
+            }
+        }
+
+        if (elements.length === 0) {
+            return null;
+        }
+
+        return this.calculateFromElements(elements);
+    }
+
+    // Tokenize mathematical expression into numbers and operators
+    tokenizeMathExpression(expression) {
+        const tokens = [];
+        let currentNumber = '';
+        let i = 0;
+
+        while (i < expression.length) {
+            const char = expression[i];
+
+            if (/[0-9.]/.test(char)) {
+                // Part of a number
+                currentNumber += char;
+            } else if (/[-+×*÷\/]/.test(char)) {
+                // Operator found
+                if (currentNumber) {
+                    const num = this.parseNumber(currentNumber);
+                    if (!isNaN(num)) {
+                        tokens.push({ type: 'number', value: num });
+                    }
+                    currentNumber = '';
+                }
+                
+                // Handle negative numbers (e.g., in "5+-3" or at start like "-5+3")
+                if (char === '-' && (tokens.length === 0 || tokens[tokens.length - 1].type === 'operator')) {
+                    // This minus is part of a negative number
+                    currentNumber = '-';
+                } else {
+                    tokens.push({ type: 'operator', value: char });
+                }
+            } else if (/\s/.test(char)) {
+                // Skip whitespace
+                if (currentNumber) {
+                    const num = this.parseNumber(currentNumber);
+                    if (!isNaN(num)) {
+                        tokens.push({ type: 'number', value: num });
+                    }
+                    currentNumber = '';
+                }
+            } else {
+                // Skip unknown characters
+                if (currentNumber) {
+                    const num = this.parseNumber(currentNumber);
+                    if (!isNaN(num)) {
+                        tokens.push({ type: 'number', value: num });
+                    }
+                    currentNumber = '';
+                }
+            }
+            i++;
+        }
+
+        // Handle remaining number
+        if (currentNumber) {
+            const num = this.parseNumber(currentNumber);
+            if (!isNaN(num)) {
+                tokens.push({ type: 'number', value: num });
+            }
+        }
+
+        return tokens;
+    }
+
+    // Calculate result from parsed elements
+    calculateFromElements(elements) {
         // Calculate the result
         let result = 0;
         let operation = 'addition';
@@ -136,7 +268,7 @@ class CalculationEngine {
 
         for (const element of elements) {
             numbers.push(element.value);
-            
+
             if (element.operator === '+') {
                 result += element.value;
             } else if (element.operator === '-') {
