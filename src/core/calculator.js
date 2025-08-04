@@ -16,7 +16,8 @@ class CalculationEngine {
         this.numberPatterns = {
             basic: /[-+]?[0-9]*\.?[0-9]+/g,
             currency: /[-+]?\$?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?/g,
-            percentage: /[-+]?[0-9]*\.?[0-9]+%/g
+            percentage: /[-+]?[0-9]*\.?[0-9]+%/g,
+            withOperators: /([-+×*÷\/]?)\s*([0-9]*\.?[0-9]+)/g
         };
     }
 
@@ -43,20 +44,18 @@ class CalculationEngine {
     // Calculate vertical column (line-separated numbers)
     calculateVerticalColumn(text) {
         const lines = text.split('\n');
-        const numbers = this.extractNumbers(lines);
+        const result = this.parseExpression(lines);
 
-        if (numbers.length <= 1) {
+        if (!result || result.numbers.length <= 1) {
             return null;
         }
 
-        const result = numbers.reduce((sum, num) => sum + num, 0);
-
         return {
             type: 'vertical',
-            numbers: numbers,
-            result: result,
-            operation: 'addition',
-            formatted: this.formatResult(result),
+            numbers: result.numbers,
+            result: result.result,
+            operation: result.operation,
+            formatted: this.formatResult(result.result),
             original: text
         };
     }
@@ -64,22 +63,125 @@ class CalculationEngine {
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
         const parts = text.split(/\s+/);
-        const numbers = this.extractNumbers(parts);
+        const result = this.parseExpression(parts);
 
-        if (numbers.length <= 1) {
+        if (!result || result.numbers.length <= 1) {
             return null;
         }
 
-        const result = numbers.reduce((sum, num) => sum + num, 0);
-
         return {
             type: 'horizontal',
-            numbers: numbers,
-            result: result,
-            operation: 'addition',
-            formatted: this.formatResult(result),
+            numbers: result.numbers,
+            result: result.result,
+            operation: result.operation,
+            formatted: this.formatResult(result.result),
             original: text
         };
+    }
+
+    // Parse mathematical expression with operators
+    parseExpression(parts) {
+        const elements = [];
+        let currentNumber = null;
+        let lastOperator = '+'; // Default to addition
+
+        for (const part of parts) {
+            const trimmed = part.trim();
+            if (!trimmed) continue;
+
+            // Check if this part contains an operator
+            const operatorMatch = trimmed.match(/^([-+×*÷\/])(.*)$/) || trimmed.match(/^(.+?)([-+×*÷\/])$/);
+            
+            if (operatorMatch) {
+                // Part contains an operator
+                const [, prefix, suffix] = operatorMatch;
+                
+                if (prefix && this.isNumber(prefix)) {
+                    // Number before operator (e.g., "5+")
+                    const num = this.parseNumber(prefix);
+                    if (!isNaN(num)) {
+                        elements.push({ type: 'number', value: num, operator: lastOperator });
+                        lastOperator = suffix || '+';
+                    }
+                } else if (suffix && this.isNumber(suffix)) {
+                    // Operator before number (e.g., "+5")
+                    lastOperator = this.normalizeOperator(prefix);
+                    const num = this.parseNumber(suffix);
+                    if (!isNaN(num)) {
+                        elements.push({ type: 'number', value: num, operator: lastOperator });
+                        lastOperator = '+';
+                    }
+                } else {
+                    // Just an operator
+                    lastOperator = this.normalizeOperator(trimmed);
+                }
+            } else if (this.isNumber(trimmed)) {
+                // Just a number
+                const num = this.parseNumber(trimmed);
+                if (!isNaN(num)) {
+                    elements.push({ type: 'number', value: num, operator: lastOperator });
+                    lastOperator = '+'; // Reset to default
+                }
+            }
+        }
+
+        if (elements.length === 0) {
+            return null;
+        }
+
+        // Calculate the result
+        let result = 0;
+        let operation = 'addition';
+        const numbers = [];
+
+        for (const element of elements) {
+            numbers.push(element.value);
+            
+            if (element.operator === '+') {
+                result += element.value;
+            } else if (element.operator === '-') {
+                result -= element.value;
+                operation = numbers.length === 1 ? 'subtraction' : 'mixed';
+            } else if (element.operator === '*' || element.operator === '×') {
+                result *= element.value;
+                operation = numbers.length === 1 ? 'multiplication' : 'mixed';
+            } else if (element.operator === '/' || element.operator === '÷') {
+                if (element.value !== 0) {
+                    result /= element.value;
+                    operation = numbers.length === 1 ? 'division' : 'mixed';
+                } else {
+                    return { numbers: [], result: NaN, operation: 'error' };
+                }
+            }
+        }
+
+        // Determine operation type for display
+        if (elements.length > 1 && elements.every(e => e.operator === '+')) {
+            operation = 'addition';
+        } else if (elements.length > 1 && elements.every(e => e.operator === '-')) {
+            operation = 'subtraction';
+        } else if (elements.length > 1) {
+            operation = 'mixed';
+        }
+
+        return {
+            numbers: numbers,
+            result: result,
+            operation: operation
+        };
+    }
+
+    // Normalize operator symbols
+    normalizeOperator(op) {
+        switch (op) {
+            case '×': return '*';
+            case '÷': return '/';
+            case '+': return '+';
+            case '-': return '-';
+            case '*': return '*';
+            case '/': return '/';
+            default: return '+';
+        }
     }
 
     // Handle single number input
@@ -215,8 +317,24 @@ class CalculationEngine {
 
         let summary = `${numbers.length} numbers`;
 
-        if (operation === 'addition') {
-            summary += ` → Sum: ${this.formatResult(result)}`;
+        switch (operation) {
+            case 'addition':
+                summary += ` → Sum: ${this.formatResult(result)}`;
+                break;
+            case 'subtraction':
+                summary += ` → Difference: ${this.formatResult(result)}`;
+                break;
+            case 'multiplication':
+                summary += ` → Product: ${this.formatResult(result)}`;
+                break;
+            case 'division':
+                summary += ` → Quotient: ${this.formatResult(result)}`;
+                break;
+            case 'mixed':
+                summary += ` → Result: ${this.formatResult(result)}`;
+                break;
+            default:
+                summary += ` → ${this.formatResult(result)}`;
         }
 
         if (type === 'vertical') {
