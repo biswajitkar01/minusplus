@@ -1,6 +1,8 @@
 // Text Management System
 // Handles text inputs, auto-calculation, and real-time updates
 
+import syntaxHighlighter from '../utils/syntaxHighlighter.js';
+
 class TextManager {
     constructor(canvas, calculator) {
         this.canvas = canvas;
@@ -8,6 +10,7 @@ class TextManager {
         this.activeInput = null;
         this.textElements = new Map();
         this.elementIdCounter = 0;
+        this.syntaxHighlighter = syntaxHighlighter;
 
         // Input element pool for performance
         this.inputPool = [];
@@ -31,30 +34,47 @@ class TextManager {
         // Position in screen coordinates
         const screenPos = this.canvas.worldToScreen(worldX, worldY);
 
+        // Create container for input and syntax highlighting
+        const container = document.createElement('div');
+        container.className = 'text-input-container';
+        container.style.position = 'absolute';
+        container.style.left = screenPos.x + 'px';
+        container.style.top = screenPos.y + 'px';
+        container.style.zIndex = '1000';
+
+        // Create syntax highlight overlay
+        const highlightOverlay = document.createElement('div');
+        highlightOverlay.className = 'syntax-highlight-overlay';
+        highlightOverlay.id = `highlight-${id}`;
+
+        // Setup input element
         input.id = `calc-input-${id}`;
         input.className = 'canvas-text-input';
-        input.style.position = 'absolute';
-        input.style.left = screenPos.x + 'px';
-        input.style.top = screenPos.y + 'px';
-        input.style.zIndex = '1000';
+        input.style.position = 'relative';
+        input.style.left = '0';
+        input.style.top = '0';
+        input.style.width = '120px';
+        input.style.minHeight = '40px';
         input.value = '';
         input.placeholder = 'Enter numbers...';
 
-        // Set initial size
-        input.style.width = '120px';
-        input.style.minHeight = '40px';
+        // Add elements to container
+        container.appendChild(highlightOverlay);
+        container.appendChild(input);
 
         // Setup event listeners
         this.setupInputListeners(input, id, worldX, worldY);
 
         // Add to DOM and focus
-        document.body.appendChild(input);
+        document.body.appendChild(container);
         input.focus();
 
         // Store element data
         const element = {
             id: id,
             input: input,
+            container: container,
+            highlightOverlay: highlightOverlay,
             worldX: worldX,
             worldY: worldY,
             calculation: null,
@@ -76,7 +96,7 @@ class TextManager {
     }
 
     setupInputListeners(input, id, worldX, worldY) {
-        // Input change handler with debouncing
+        // Input change handler with debouncing for calculations
         let inputTimeout;
         input.addEventListener('input', (e) => {
             clearTimeout(inputTimeout);
@@ -85,6 +105,7 @@ class TextManager {
             }, 150);
 
             this.autoResize(input);
+            this.updateSyntaxHighlighting(id);
         });
 
         // Paste handler
@@ -92,6 +113,7 @@ class TextManager {
             setTimeout(() => {
                 this.handleInputChange(id);
                 this.autoResize(input);
+                this.updateSyntaxHighlighting(id);
             }, 10);
         });
 
@@ -120,6 +142,15 @@ class TextManager {
                 // Ctrl+Enter (or Cmd+Enter on Mac) creates a new input box
                 e.preventDefault();
                 this.createAdjacentInput(worldX, worldY + 60);
+            }
+        });
+
+        // Scroll synchronization for highlight overlay
+        input.addEventListener('scroll', () => {
+            const element = this.textElements.get(id);
+            if (element && element.highlightOverlay) {
+                element.highlightOverlay.scrollTop = input.scrollTop;
+                element.highlightOverlay.scrollLeft = input.scrollLeft;
             }
         });
     }
@@ -230,6 +261,22 @@ class TextManager {
             }
             textarea.style.overflowX = 'hidden';
         }
+
+        // Sync highlight overlay dimensions and styles
+        const element = this.findElementByInput(textarea);
+        if (element) {
+            this.syncHighlightOverlay(element);
+        }
+    }
+
+    // Helper method to find element by input
+    findElementByInput(input) {
+        for (const [id, element] of this.textElements) {
+            if (element.input === input) {
+                return element;
+            }
+        }
+        return null;
     }
 
     createMeasureElement(text) {
@@ -255,8 +302,16 @@ class TextManager {
 
     updateElementPosition(element) {
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
-        element.input.style.left = screenPos.x + 'px';
-        element.input.style.top = screenPos.y + 'px';
+
+        // Update container position (contains both input and highlight overlay)
+        if (element.container) {
+            element.container.style.left = screenPos.x + 'px';
+            element.container.style.top = screenPos.y + 'px';
+        } else {
+            // Fallback for legacy elements without container
+            element.input.style.left = screenPos.x + 'px';
+            element.input.style.top = screenPos.y + 'px';
+        }
 
         // Update result position if visible - use actual rendered height, not scroll height
         if (element.resultElement && element.resultElement.style.display !== 'none') {
@@ -264,6 +319,42 @@ class TextManager {
             element.resultElement.style.left = screenPos.x + 'px';
             element.resultElement.style.top = (screenPos.y + inputHeight + 5) + 'px';
         }
+    }
+
+    // Update syntax highlighting for a specific element
+    updateSyntaxHighlighting(id) {
+        const element = this.textElements.get(id);
+        if (!element || !element.highlightOverlay) return;
+
+        const text = element.input.value || '';
+
+        // Use debounced highlighting to prevent performance issues
+        this.syntaxHighlighter.highlightTextDebounced(text, (highlightedHtml) => {
+            if (element.highlightOverlay) {
+                element.highlightOverlay.innerHTML = highlightedHtml;
+                this.syncHighlightOverlay(element);
+            }
+        });
+    }
+
+    // Sync highlight overlay dimensions and scroll with textarea
+    syncHighlightOverlay(element) {
+        if (!element.highlightOverlay || !element.input) return;
+
+        const input = element.input;
+        const overlay = element.highlightOverlay;
+
+        // Copy all relevant styles from input to overlay
+        overlay.style.width = input.style.width;
+        overlay.style.height = input.style.height;
+        overlay.style.padding = getComputedStyle(input).padding;
+        overlay.style.fontSize = getComputedStyle(input).fontSize;
+        overlay.style.lineHeight = getComputedStyle(input).lineHeight;
+        overlay.style.fontFamily = getComputedStyle(input).fontFamily;
+
+        // Sync scroll position
+        overlay.scrollTop = input.scrollTop;
+        overlay.scrollLeft = input.scrollLeft;
     }
 
     // Canvas transform callback
@@ -275,8 +366,11 @@ class TextManager {
         const element = this.textElements.get(id);
         if (!element) return;
 
-        // Remove from DOM
-        if (element.input.parentNode) {
+        // Remove container from DOM (includes input and highlight overlay)
+        if (element.container && element.container.parentNode) {
+            element.container.parentNode.removeChild(element.container);
+        } else if (element.input.parentNode) {
+            // Fallback for legacy elements without container
             element.input.parentNode.removeChild(element.input);
         }
 

@@ -145,6 +145,93 @@
     transform: translateY(5px);
 }
 
+/* Syntax highlighting overlay styles */
+.syntax-highlight-overlay {
+    /* Position exactly over the textarea */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: var(--z-highlight);
+
+    /* Disable pointer events so typing works normally */
+    pointer-events: none;
+
+    /* Match textarea styling exactly */
+    font-family: 'JetBrains Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: inherit;
+    line-height: inherit;
+    padding: inherit;
+    margin: 0;
+    border: none;
+    background: transparent;
+
+    /* Text wrapping and overflow */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: hidden;
+
+    /* Performance optimizations */
+    transform: translateZ(0);
+    will-change: contents;
+}
+
+/* Syntax highlighting color tokens */
+.token-operators {
+    color: var(--highlight-operator);
+    font-weight: 500;
+}
+
+.token-currency {
+    color: var(--highlight-currency);
+    font-weight: 600;
+}
+
+.token-timeWords {
+    color: var(--highlight-time);
+    font-style: italic;
+    font-weight: 500;
+}
+
+.token-sapMinus {
+    color: var(--highlight-sap);
+    font-weight: 700;
+    text-shadow: 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.token-accounting {
+    color: var(--highlight-accounting);
+    font-weight: 600;
+}
+
+.token-numbers {
+    color: var(--highlight-number);
+    font-weight: 400;
+}
+
+.token-percentages {
+    color: var(--highlight-percentage);
+    font-weight: 500;
+}
+
+/* Highlight container for each text input */
+.text-input-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Ensure textarea is above highlight overlay for input */
+.text-input-container .canvas-text-input {
+    position: relative;
+    z-index: var(--z-input);
+    background: transparent;
+    color: transparent;
+}
+
+/* Show text color when not highlighting */
+.text-input-container .canvas-text-input.no-highlight {
+    color: var(--text-primary);
+}
+
 /* Grid overlay styles */
 .canvas-grid {
     position: absolute;

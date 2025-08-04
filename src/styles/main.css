@@ -61,6 +61,7 @@
 
     /* Z-index layers */
     --z-canvas: 1;
+    --z-highlight: 999;
     --z-input: 1000;
     --z-result: 1001;
     --z-overlay: 1500;

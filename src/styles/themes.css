@@ -49,6 +49,22 @@
     --border-error: var(--accent-red);
     --border-success: var(--accent-green);
 
+    /* Syntax highlighting colors */
+    --highlight-operator: #007acc;
+    /* Blue for operators */
+    --highlight-currency: #28a745;
+    /* Green for currency */
+    --highlight-time: #17a2b8;
+    /* Cyan for time keywords */
+    --highlight-sap: #dc3545;
+    /* Red for SAP minus */
+    --highlight-accounting: #6f42c1;
+    /* Purple for accounting */
+    --highlight-number: #ffc107;
+    /* Amber for numbers */
+    --highlight-percentage: #fd7e14;
+    /* Orange for percentages */
+
     /* Highlight colors */
     --highlight-primary: rgba(0, 122, 204, 0.3);
     --highlight-secondary: rgba(255, 255, 255, 0.1);
