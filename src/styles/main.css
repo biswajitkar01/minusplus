@@ -16,6 +16,9 @@
     --accent-orange: #ffa500;
     --accent-green: #32cd32;
     --accent-red: #ff4444;
+    --accent-purple: #9f4fff;
+
+    --text-on-accent: #ffffff;
 
     --highlight-primary: rgba(0, 122, 204, 0.3);
     --highlight-match: rgba(255, 165, 0, 0.3);
@@ -430,6 +433,60 @@ body {
 
 .copy-feedback .copy-text {
     font-size: var(--font-size-sm);
+}
+
+/* Format detection feedback styles */
+.format-feedback {
+    position: fixed;
+    top: calc(var(--spacing-lg) + 60px);
+    /* Position below copy feedback */
+    right: var(--spacing-lg);
+    background: var(--accent-blue);
+    color: var(--text-on-accent);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    z-index: var(--z-feedback);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-10px);
+    opacity: 0;
+    transition: all var(--transition-normal);
+    max-width: 200px;
+}
+
+.format-feedback.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.format-feedback.hide {
+    transform: translateY(-10px);
+    opacity: 0;
+}
+
+.format-feedback.sap {
+    background: var(--accent-orange);
+}
+
+.format-feedback.accounting {
+    background: var(--accent-purple);
+}
+
+.format-feedback.currency {
+    background: var(--accent-green);
+}
+
+.format-feedback .format-icon {
+    font-size: var(--font-size-base);
+}
+
+.format-feedback .format-text {
+    font-size: var(--font-size-sm);
+    line-height: 1.3;
 }
 
 /* Scrollbar styles (for future scrollable areas) */
