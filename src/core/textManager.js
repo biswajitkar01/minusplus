@@ -99,7 +99,6 @@ class TextManager {
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
-            // Let CSS handle scrollbar visibility
         });
 
         input.addEventListener('blur', () => {
@@ -110,7 +109,7 @@ class TextManager {
                 if (!input.value.trim()) {
                     this.removeElement(id);
                 }
-            }, 50); // Very short delay to allow for quick focus changes
+            }, 50);
         });
 
         // Keyboard shortcuts
@@ -122,7 +121,6 @@ class TextManager {
                 e.preventDefault();
                 this.createAdjacentInput(worldX, worldY + 60);
             }
-            // Normal Enter key allows new line within the same input (default behavior)
         });
     }
 
@@ -130,7 +128,7 @@ class TextManager {
         const element = this.textElements.get(id);
         if (!element) return;
 
-        const text = element.input.value;
+        const text = element.input.value || '';
         const calculation = this.calculator.calculate(text);
 
         element.calculation = calculation;

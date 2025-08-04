@@ -113,6 +113,19 @@ class CalculationEngine {
             const trimmed = part.trim();
             if (!trimmed) continue;
 
+            // Check for SAP trailing minus format first (before operator detection)
+            if (trimmed.endsWith('-') && trimmed.length > 1) {
+                const numberPart = trimmed.slice(0, -1);
+                if (/^[0-9.,\s$€£¥₹]+$/.test(numberPart)) {
+                    const num = this.parseNumber(trimmed);
+                    if (!isNaN(num)) {
+                        elements.push({ type: 'number', value: num, operator: lastOperator });
+                        lastOperator = '+'; // Reset to default
+                    }
+                    continue; // Skip operator detection for SAP format
+                }
+            }
+
             // Check if this part contains an operator
             const operatorMatch = trimmed.match(/^([-+×*÷\/])(.*)$/) || trimmed.match(/^(.+?)([-+×*÷\/])$/);
 
@@ -374,20 +387,20 @@ class CalculationEngine {
         // Remove common formatting characters
         let cleaned = str.trim();
 
-        // Handle percentage
-        if (cleaned.endsWith('%')) {
-            cleaned = cleaned.slice(0, -1);
-            const num = parseFloat(cleaned);
-            return isNaN(num) ? NaN : num / 100;
-        }
-
-        // Handle SAP-style trailing minus (e.g., "900-" becomes "-900")
+        // Handle SAP-style trailing minus FIRST (e.g., "900-" becomes "-900")
         if (cleaned.endsWith('-') && cleaned.length > 1) {
             const numberPart = cleaned.slice(0, -1);
             // Make sure the part before the minus is actually a number
             if (/^[0-9.,\s$€£¥₹]+$/.test(numberPart)) {
                 cleaned = '-' + numberPart;
             }
+        }
+
+        // Handle percentage
+        if (cleaned.endsWith('%')) {
+            cleaned = cleaned.slice(0, -1);
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? NaN : num / 100;
         }
 
         // Remove currency symbols, commas, and extra whitespace
