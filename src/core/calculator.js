@@ -159,7 +159,7 @@ class CalculationEngine {
     // Parse mathematical expression without spaces (e.g., "2+3-1*4")
     parseMathExpression(expression) {
         const trimmed = expression.trim();
-        
+
         // Check if this looks like a mathematical expression
         if (!/[-+×*÷\/]/.test(trimmed)) {
             return null; // No operators found
@@ -177,12 +177,12 @@ class CalculationEngine {
 
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
-            
+
             if (token.type === 'number') {
-                elements.push({ 
-                    type: 'number', 
-                    value: token.value, 
-                    operator: currentOperator 
+                elements.push({
+                    type: 'number',
+                    value: token.value,
+                    operator: currentOperator
                 });
                 currentOperator = '+'; // Reset for next
             } else if (token.type === 'operator') {
@@ -206,25 +206,48 @@ class CalculationEngine {
         while (i < expression.length) {
             const char = expression[i];
 
-            if (/[0-9.]/.test(char)) {
-                // Part of a number
+            if (/[0-9.,]/.test(char)) {
+                // Part of a number (including commas and decimals)
                 currentNumber += char;
             } else if (/[-+×*÷\/]/.test(char)) {
-                // Operator found
-                if (currentNumber) {
-                    const num = this.parseNumber(currentNumber);
-                    if (!isNaN(num)) {
-                        tokens.push({ type: 'number', value: num });
+                // Potential operator found
+
+                // Check if this minus is trailing (SAP format like "900-")
+                if (char === '-' && currentNumber && /[0-9]/.test(currentNumber)) {
+                    // Look ahead to see if this is trailing minus or operator
+                    const nextChar = i + 1 < expression.length ? expression[i + 1] : '';
+
+                    if (!nextChar || /\s/.test(nextChar) || /[+×*÷\/]/.test(nextChar)) {
+                        // This appears to be a trailing minus (SAP format)
+                        currentNumber += '-'; // Add to current number for parseNumber to handle
+                    } else {
+                        // Regular operator
+                        if (currentNumber) {
+                            const num = this.parseNumber(currentNumber);
+                            if (!isNaN(num)) {
+                                tokens.push({ type: 'number', value: num });
+                            }
+                            currentNumber = '';
+                        }
+                        tokens.push({ type: 'operator', value: char });
                     }
-                    currentNumber = '';
-                }
-                
-                // Handle negative numbers (e.g., in "5+-3" or at start like "-5+3")
-                if (char === '-' && (tokens.length === 0 || tokens[tokens.length - 1].type === 'operator')) {
-                    // This minus is part of a negative number
-                    currentNumber = '-';
                 } else {
-                    tokens.push({ type: 'operator', value: char });
+                    // Regular operator handling
+                    if (currentNumber) {
+                        const num = this.parseNumber(currentNumber);
+                        if (!isNaN(num)) {
+                            tokens.push({ type: 'number', value: num });
+                        }
+                        currentNumber = '';
+                    }
+
+                    // Handle negative numbers (e.g., in "5+-3" or at start like "-5+3")
+                    if (char === '-' && (tokens.length === 0 || tokens[tokens.length - 1].type === 'operator')) {
+                        // This minus is part of a negative number
+                        currentNumber = '-';
+                    } else {
+                        tokens.push({ type: 'operator', value: char });
+                    }
                 }
             } else if (/\s/.test(char)) {
                 // Skip whitespace
@@ -358,6 +381,15 @@ class CalculationEngine {
             return isNaN(num) ? NaN : num / 100;
         }
 
+        // Handle SAP-style trailing minus (e.g., "900-" becomes "-900")
+        if (cleaned.endsWith('-') && cleaned.length > 1) {
+            const numberPart = cleaned.slice(0, -1);
+            // Make sure the part before the minus is actually a number
+            if (/^[0-9.,\s$€£¥₹]+$/.test(numberPart)) {
+                cleaned = '-' + numberPart;
+            }
+        }
+
         // Remove currency symbols, commas, and extra whitespace
         cleaned = cleaned.replace(/[$€£¥₹,\s]/g, '');
 
@@ -374,6 +406,37 @@ class CalculationEngine {
     // Check if string represents a valid number
     isNumber(str) {
         return !isNaN(this.parseNumber(str));
+    }
+
+    // Detect and describe number format for UX feedback
+    detectNumberFormat(str) {
+        if (typeof str !== 'string') {
+            return null;
+        }
+
+        const cleaned = str.trim();
+
+        if (cleaned.endsWith('%')) {
+            return { type: 'percentage', description: 'Percentage format' };
+        }
+
+        if (cleaned.endsWith('-') && cleaned.length > 1 && /^[0-9.,\s$€£¥₹]+$/.test(cleaned.slice(0, -1))) {
+            return { type: 'sap_trailing_minus', description: 'SAP trailing minus format' };
+        }
+
+        if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+            return { type: 'accounting_parentheses', description: 'Accounting parentheses format' };
+        }
+
+        if (/[$€£¥₹]/.test(cleaned)) {
+            return { type: 'currency', description: 'Currency format' };
+        }
+
+        if (/^[-+]?[0-9]*\.?[0-9]+$/.test(cleaned.replace(/,/g, ''))) {
+            return { type: 'standard', description: 'Standard number format' };
+        }
+
+        return null;
     }
 
     // Format calculation results with proper locale formatting
