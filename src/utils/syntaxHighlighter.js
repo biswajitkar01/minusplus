@@ -44,7 +44,7 @@ class SyntaxHighlighter {
         const currencyList = HIGHLIGHT_CONFIG.keywords.currencies.patterns.join('|');
         const timeList = HIGHLIGHT_CONFIG.keywords.timeWords.patterns.join('|');
 
-        // Order by frequency for performance optimization
+        // Order by frequency for performance optimization - REMOVED NUMBERS PATTERN
         patterns.set('operators', {
             regex: /(?<![.\d])\s*[+\-*/]\s*(?![.\d])/g,
             priority: 1,
@@ -87,12 +87,7 @@ class SyntaxHighlighter {
             color: HIGHLIGHT_CONFIG.symbols.percentages.color
         });
 
-        patterns.set('numbers', {
-            regex: /\b\d+(?:\.\d+)?\b/g,
-            priority: 7,
-            className: 'token-numbers',
-            color: HIGHLIGHT_CONFIG.symbols.numbers.color
-        });
+        // REMOVED: numbers pattern to improve performance and reduce unnecessary highlighting
 
         return patterns;
     }
@@ -100,7 +95,7 @@ class SyntaxHighlighter {
     /**
      * Debounced highlighting to prevent performance issues during typing
      */
-    highlightTextDebounced(text, callback, delay = 150) {
+    highlightTextDebounced(text, callback, delay = 300) {
         const key = 'highlight_' + Date.now();
 
         // Clear existing timeout

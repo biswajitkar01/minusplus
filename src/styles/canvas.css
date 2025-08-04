@@ -203,11 +203,6 @@
     font-weight: 600;
 }
 
-.token-numbers {
-    color: var(--highlight-number);
-    font-weight: 400;
-}
-
 .token-percentages {
     color: var(--highlight-percentage);
     font-weight: 500;

@@ -102,7 +102,7 @@ class TextManager {
             clearTimeout(inputTimeout);
             inputTimeout = setTimeout(() => {
                 this.handleInputChange(id);
-            }, 150);
+            }, 250);
 
             this.autoResize(input);
             this.updateSyntaxHighlighting(id);
