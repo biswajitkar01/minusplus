@@ -224,12 +224,14 @@
     position: relative;
     z-index: var(--z-input);
     background: transparent;
-    color: transparent;
+    color: var(--text-primary);
+    /* Make text visible by default, highlighting will show through overlay */
 }
 
-/* Show text color when not highlighting */
-.text-input-container .canvas-text-input.no-highlight {
-    color: var(--text-primary);
+/* When highlighting is active, make input text transparent so overlay shows through */
+.text-input-container .canvas-text-input.highlighting {
+    color: transparent;
+    caret-color: var(--text-primary); /* Keep cursor visible */
 }
 
 /* Grid overlay styles */

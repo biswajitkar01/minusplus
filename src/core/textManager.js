@@ -327,17 +327,23 @@ class TextManager {
         if (!element || !element.highlightOverlay) return;
 
         const text = element.input.value || '';
-
+        
         // Use debounced highlighting to prevent performance issues
         this.syntaxHighlighter.highlightTextDebounced(text, (highlightedHtml) => {
             if (element.highlightOverlay) {
                 element.highlightOverlay.innerHTML = highlightedHtml;
                 this.syncHighlightOverlay(element);
+                
+                // Toggle highlighting class based on whether we have highlighted content
+                const hasHighlighting = highlightedHtml.includes('<span class="token-');
+                if (hasHighlighting) {
+                    element.input.classList.add('highlighting');
+                } else {
+                    element.input.classList.remove('highlighting');
+                }
             }
         });
-    }
-
-    // Sync highlight overlay dimensions and scroll with textarea
+    }    // Sync highlight overlay dimensions and scroll with textarea
     syncHighlightOverlay(element) {
         if (!element.highlightOverlay || !element.input) return;
 

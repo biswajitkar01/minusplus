@@ -119,26 +119,29 @@ class SyntaxHighlighter {
         this.debounceTimeouts.set(key, timeout);
     }
 
-    /**
-     * Main highlighting function with performance monitoring
-     */
-    highlightText(text) {
-        if (!text || text.length === 0) return '';
-
-        const startTime = performance.now();
-        const tokens = this.extractTokens(text);
-
-        // Performance safeguard
-        const duration = performance.now() - startTime;
-        if (duration > 10) {
-            console.warn(`Syntax highlighting took ${duration.toFixed(2)}ms - consider optimization`);
-            return this.escapeHtml(text); // Fallback to plain text
-        }
-
-        return this.applyHighlighting(text, tokens);
+  /**
+   * Main highlighting function with performance monitoring
+   */
+  highlightText(text) {
+    if (!text || text.length === 0) return '';
+    
+    const startTime = performance.now();
+    const tokens = this.extractTokens(text);
+    
+    // Performance safeguard
+    const duration = performance.now() - startTime;
+    if (duration > 10) {
+      console.warn(`Syntax highlighting took ${duration.toFixed(2)}ms - consider optimization`);
+      return this.escapeHtml(text); // Fallback to plain text
     }
-
-    /**
+    
+    // If no tokens found, return escaped plain text
+    if (tokens.length === 0) {
+      return this.escapeHtml(text);
+    }
+    
+    return this.applyHighlighting(text, tokens);
+  }    /**
      * Extract all tokens in a single pass for optimal performance
      */
     extractTokens(text) {
