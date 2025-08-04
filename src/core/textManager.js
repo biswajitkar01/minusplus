@@ -105,7 +105,12 @@ class TextManager {
             }, 250);
 
             this.autoResize(input);
-            this.updateSyntaxHighlighting(id);
+            
+            // Only trigger highlighting for longer text or when operators are present
+            const text = input.value || '';
+            if (text.length > 3 || /[+\-*/$%()]/.test(text)) {
+                this.updateSyntaxHighlighting(id);
+            }
         });
 
         // Paste handler
@@ -328,17 +333,24 @@ class TextManager {
 
         const text = element.input.value || '';
         
+        // Skip highlighting for very short text to improve performance
+        if (text.length < 2) {
+            element.highlightOverlay.innerHTML = '';
+            element.input.classList.remove('highlighting');
+            return;
+        }
+
         // Use debounced highlighting to prevent performance issues
         this.syntaxHighlighter.highlightTextDebounced(text, (highlightedHtml) => {
             if (element.highlightOverlay) {
                 element.highlightOverlay.innerHTML = highlightedHtml;
                 this.syncHighlightOverlay(element);
-                
-                // Toggle highlighting class based on whether we have highlighted content
+
+                // Only toggle highlighting if there's a meaningful change
                 const hasHighlighting = highlightedHtml.includes('<span class="token-');
-                if (hasHighlighting) {
+                if (hasHighlighting && !element.input.classList.contains('highlighting')) {
                     element.input.classList.add('highlighting');
-                } else {
+                } else if (!hasHighlighting && element.input.classList.contains('highlighting')) {
                     element.input.classList.remove('highlighting');
                 }
             }

@@ -226,7 +226,10 @@
 /* When highlighting is active, make input text transparent so overlay shows through */
 .text-input-container .canvas-text-input.highlighting {
     color: transparent;
-    caret-color: var(--text-primary); /* Keep cursor visible */
+    caret-color: var(--text-primary);
+    /* Keep cursor visible */
+    /* Use transform instead of color change for better performance */
+    will-change: color;
 }
 
 /* Grid overlay styles */

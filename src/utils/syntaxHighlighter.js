@@ -53,7 +53,7 @@ class SyntaxHighlighter {
         });
 
         patterns.set('currency', {
-            regex: new RegExp(`(?:\\$|\\b(?:${currencyList})\\b)\\s*([\\d,]+(?:\\.\\d{2})?)`, 'gi'),
+            regex: new RegExp(`(?:\\$\\s*([\\d,]+(?:\\.\\d{2})?)|\\b(?:${currencyList})\\s+([\\d,]+(?:\\.\\d{2})?))`, 'gi'),
             priority: 2,
             className: 'token-currency',
             color: HIGHLIGHT_CONFIG.symbols.currency.color
@@ -95,7 +95,7 @@ class SyntaxHighlighter {
     /**
      * Debounced highlighting to prevent performance issues during typing
      */
-    highlightTextDebounced(text, callback, delay = 300) {
+    highlightTextDebounced(text, callback, delay = 500) {
         const key = 'highlight_' + Date.now();
 
         // Clear existing timeout
@@ -114,29 +114,29 @@ class SyntaxHighlighter {
         this.debounceTimeouts.set(key, timeout);
     }
 
-  /**
-   * Main highlighting function with performance monitoring
-   */
-  highlightText(text) {
-    if (!text || text.length === 0) return '';
-    
-    const startTime = performance.now();
-    const tokens = this.extractTokens(text);
-    
-    // Performance safeguard
-    const duration = performance.now() - startTime;
-    if (duration > 10) {
-      console.warn(`Syntax highlighting took ${duration.toFixed(2)}ms - consider optimization`);
-      return this.escapeHtml(text); // Fallback to plain text
-    }
-    
-    // If no tokens found, return escaped plain text
-    if (tokens.length === 0) {
-      return this.escapeHtml(text);
-    }
-    
-    return this.applyHighlighting(text, tokens);
-  }    /**
+    /**
+     * Main highlighting function with performance monitoring
+     */
+    highlightText(text) {
+        if (!text || text.length === 0) return '';
+
+        const startTime = performance.now();
+        const tokens = this.extractTokens(text);
+
+        // Performance safeguard
+        const duration = performance.now() - startTime;
+        if (duration > 10) {
+            console.warn(`Syntax highlighting took ${duration.toFixed(2)}ms - consider optimization`);
+            return this.escapeHtml(text); // Fallback to plain text
+        }
+
+        // If no tokens found, return escaped plain text
+        if (tokens.length === 0) {
+            return this.escapeHtml(text);
+        }
+
+        return this.applyHighlighting(text, tokens);
+    }    /**
      * Extract all tokens in a single pass for optimal performance
      */
     extractTokens(text) {
