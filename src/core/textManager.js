@@ -185,9 +185,15 @@ class TextManager {
 
         // Reset dimensions to measure content
         textarea.style.height = 'auto';
-        textarea.style.width = 'auto';
+
+        // Store current width if it was previously expanded
+        const currentWidth = parseInt(textarea.style.width) || 120;
+        const wasExpanded = currentWidth > 120;
 
         if (!hasManualLineBreaks) {
+            // Reset width for measuring
+            textarea.style.width = 'auto';
+
             // Single line content - expand horizontally until max chars
             if (text.length <= maxChars) {
                 // Calculate width needed for the text
@@ -212,6 +218,9 @@ class TextManager {
             }
         } else {
             // Multi-line content with manual breaks - expand vertically
+            // PRESERVE the expanded width if it was previously expanded
+            const preservedWidth = wasExpanded ? Math.max(currentWidth, 120) : 120;
+
             const maxLines = 50;
             const lineHeight = 24;
             const minHeight = 40;
@@ -219,7 +228,7 @@ class TextManager {
 
             const newHeight = Math.min(maxHeight, Math.max(minHeight, textarea.scrollHeight));
             textarea.style.height = newHeight + 'px';
-            textarea.style.width = '120px'; // Fixed width for vertical content
+            textarea.style.width = preservedWidth + 'px'; // Use preserved width instead of fixed 120px
             textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping for multi-line
 
             // Enable vertical scrolling if content exceeds max height
@@ -393,7 +402,14 @@ class TextManager {
                 worldX: element.worldX,
                 worldY: element.worldY,
                 text: element.input.value,
-                calculation: element.calculation
+                calculation: element.calculation,
+                // Store the current width and height for restoration
+                width: parseInt(element.input.style.width) || 120,
+                height: parseInt(element.input.style.height) || 40,
+                // Store CSS properties to preserve scrolling behavior
+                whiteSpace: element.input.style.whiteSpace || 'nowrap',
+                overflowX: element.input.style.overflowX || 'auto',
+                overflowY: element.input.style.overflowY || 'hidden'
             });
         });
         return elements;
@@ -406,8 +422,12 @@ class TextManager {
             const element = this.createTextInput(elementData.worldX, elementData.worldY);
             element.input.value = elementData.text || '';
 
-            // Trigger auto-resize to ensure proper sizing after restoration
-            this.autoResize(element.input);
+            // Simply restore the saved width, height, and CSS properties
+            element.input.style.width = (elementData.width || 120) + 'px';
+            element.input.style.height = (elementData.height || 40) + 'px';
+            element.input.style.whiteSpace = elementData.whiteSpace || 'nowrap';
+            element.input.style.overflowX = elementData.overflowX || 'auto';
+            element.input.style.overflowY = elementData.overflowY || 'hidden';
 
             // Restore calculation if present
             if (elementData.text) {
