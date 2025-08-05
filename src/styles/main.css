@@ -196,6 +196,24 @@ body {
     /* Ensure it can be clicked */
 }
 
+.shortcuts-button .minusplus-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-family-mono);
+    font-size: 16px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -1px;
+}
+
+.shortcuts-button .minus {
+    color: var(--accent-red);
+}
+
+.shortcuts-button .plus {
+    color: var(--accent-green);
+}
+
 .shortcuts-button:hover {
     background: var(--bg-tertiary);
     border-color: var(--accent-blue);

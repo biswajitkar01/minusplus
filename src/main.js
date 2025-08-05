@@ -186,7 +186,7 @@ class MinusPlusApp {
             this.textManager.onCanvasTransform();
         });
 
-        // Mouse drag - pan (middle mouse or Ctrl+click)
+        // Mouse drag - pan (Ctrl+click)
         let isDragging = false;
         let lastPos = { x: 0, y: 0 };
 
@@ -195,11 +195,11 @@ class MinusPlusApp {
         let touchLastPos = { x: 0, y: 0 };
 
         this.canvas.canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+            if (e.button === 0 && e.ctrlKey) {
                 isDragging = true;
                 lastPos = { x: e.clientX, y: e.clientY };
                 e.preventDefault();
-                this.canvas.canvas.style.cursor = 'move';
+                this.canvas.canvas.style.cursor = 'grab';
             }
         });
 
@@ -209,6 +209,9 @@ class MinusPlusApp {
                 const deltaY = e.clientY - lastPos.y;
                 this.canvas.pan(deltaX, deltaY);
                 lastPos = { x: e.clientX, y: e.clientY };
+
+                // Show grabbing cursor while dragging
+                this.canvas.canvas.style.cursor = 'grabbing';
 
                 // Update text element positions after pan
                 this.textManager.onCanvasTransform();

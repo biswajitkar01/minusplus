@@ -21,17 +21,18 @@
         <canvas id="main-canvas"></canvas>
         <div id="ui-overlay">
             <div class="help-indicator">
-                <span>Click anywhere to start calculating • Add, subtract, multiply, divide</span>
+                <span> Hi, <br> Welcome to minusplus. Click anywhere to start calculating!</span>
                 <div class="shortcuts">
-                    <span>Enter for new line • Ctrl+Enter for new box</span>
-                    <span>Middle mouse / Ctrl+click to pan</span>
-                    <span>Mouse wheel to zoom</span>
+                    <span>To add no need to type any +, just hit space or enter!</span>
+                    <span>Stores everything locally on the browser.</span>
                 </div>
             </div>
 
             <!-- Floating shortcuts button -->
             <button id="shortcuts-btn" class="shortcuts-button" title="Show shortcuts">
-                <span>?</span>
+                <span class="minusplus-icon">
+                    <span class="minus">−</span><span class="plus">+</span>
+                </span>
             </button>
 
             <!-- Clear all button -->
@@ -56,16 +57,12 @@
                         <span class="description">Reset view to center</span>
                     </div>
                     <div class="shortcut-item">
-                        <span class="key">Middle Mouse</span>
-                        <span class="description">Pan canvas</span>
-                    </div>
-                    <div class="shortcut-item">
                         <span class="key">Mouse Wheel</span>
                         <span class="description">Zoom in/out</span>
                     </div>
                     <div class="shortcut-item">
                         <span class="key">Ctrl + Click</span>
-                        <span class="description">Alternative pan method</span>
+                        <span class="description">Pan canvas</span>
                     </div>
                 </div>
                 <h3>Examples</h3>
