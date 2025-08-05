@@ -312,6 +312,13 @@ class MinusPlusApp {
             const hasElements = this.textManager.textElements.size > 0;
             if (!hasElements) {
                 this.helpIndicator?.classList.add('fade-in');
+                // Also hide action buttons when showing help
+                if (this.shortcutsButton) {
+                    this.shortcutsButton.classList.remove('visible');
+                }
+                if (this.clearAllButton) {
+                    this.clearAllButton.classList.remove('visible');
+                }
             } else {
                 // Hide help and show action buttons if we have elements
                 this.hideHelpIndicator();
@@ -337,6 +344,13 @@ class MinusPlusApp {
 
         // Close popup when clicking outside
         document.addEventListener('click', (e) => {
+            if (!this.shortcutsPopup.contains(e.target) && !this.shortcutsButton.contains(e.target)) {
+                this.hideShortcutsPopup();
+            }
+        });
+
+        // Close popup when touching outside (mobile)
+        document.addEventListener('touchstart', (e) => {
             if (!this.shortcutsPopup.contains(e.target) && !this.shortcutsButton.contains(e.target)) {
                 this.hideShortcutsPopup();
             }
@@ -413,6 +427,14 @@ class MinusPlusApp {
             this.helpIndicator.style.display = 'block';
             this.helpIndicator.classList.remove('fade-out');
             this.helpIndicator.classList.add('fade-in');
+
+            // Hide action buttons when showing help indicator
+            if (this.shortcutsButton) {
+                this.shortcutsButton.classList.remove('visible');
+            }
+            if (this.clearAllButton) {
+                this.clearAllButton.classList.remove('visible');
+            }
         }
     }
 
@@ -443,15 +465,17 @@ class MinusPlusApp {
     hideHelpIndicator() {
         if (this.helpIndicator && this.helpIndicator.style.display !== 'none') {
             this.helpIndicator.classList.add('fade-out');
+
+            // Show action buttons immediately when help starts hiding
+            if (this.shortcutsButton) {
+                this.shortcutsButton.classList.add('visible');
+            }
+            if (this.clearAllButton) {
+                this.clearAllButton.classList.add('visible');
+            }
+
             setTimeout(() => {
                 this.helpIndicator.style.display = 'none';
-                // Show action buttons when help indicator is hidden
-                if (this.shortcutsButton) {
-                    this.shortcutsButton.classList.add('visible');
-                }
-                if (this.clearAllButton) {
-                    this.clearAllButton.classList.add('visible');
-                }
             }, 500);
         }
     }
@@ -464,6 +488,13 @@ class MinusPlusApp {
                 await this.textManager.restoreElements(state.elements);
                 // Hide help indicator if we have existing elements
                 this.hideHelpIndicator();
+                // Immediately show action buttons without delay for existing content
+                if (this.shortcutsButton) {
+                    this.shortcutsButton.classList.add('visible');
+                }
+                if (this.clearAllButton) {
+                    this.clearAllButton.classList.add('visible');
+                }
                 console.log('Previous state loaded successfully');
             } else {
                 // No previous state - ensure we start with a centered, grid-aligned view

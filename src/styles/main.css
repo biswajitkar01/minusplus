@@ -184,8 +184,8 @@ body {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    z-index: 1000;
-    /* High z-index to ensure it's above everything */
+    z-index: 9999;
+    /* Highest z-index */
     transition: all var(--transition-fast);
     display: none;
     /* Hidden by default, shown when help indicator is hidden */
@@ -224,10 +224,11 @@ body {
     color: var(--text-primary);
     font-size: 16px;
     cursor: pointer;
-    z-index: 1000;
+    z-index: 9999;
+    /* Highest z-index */
     transition: all var(--transition-fast);
-    display: flex;
-    /* Force visible for debugging */
+    display: none;
+    /* Hidden by default */
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-md);
@@ -249,6 +250,30 @@ body {
     display: flex;
 }
 
+/* Mobile responsive layout for buttons */
+@media (max-width: 768px) {
+    .clear-all-button {
+        top: 16px;
+        right: 16px;
+    }
+
+    .shortcuts-button {
+        top: 70px;
+        right: 16px;
+    }
+
+    .shortcuts-popup {
+        top: 120px;
+        right: 16px;
+        left: 16px;
+        min-width: auto;
+        max-width: none;
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
 /* Shortcuts popup */
 .shortcuts-popup {
     position: fixed;
@@ -258,8 +283,8 @@ body {
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     padding: var(--spacing-lg);
-    z-index: 1001;
-    /* Higher than button to appear above it */
+    z-index: 10000;
+    /* Higher than buttons */
     box-shadow: var(--shadow-lg);
     min-width: 280px;
     transition: all var(--transition-normal);
@@ -557,23 +582,6 @@ body {
         font-size: var(--font-size-xs);
     }
 
-    .shortcuts-button,
-    .clear-all-button {
-        top: var(--spacing-md);
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-    }
-
-    .clear-all-button {
-        right: calc(var(--spacing-md) + 46px);
-        /* Adjust for smaller mobile spacing */
-    }
-
-    .shortcuts-button {
-        right: var(--spacing-md);
-    }
-
     .canvas-text-input {
         font-size: 18px;
         /* Prevent zoom on iOS */
@@ -587,19 +595,8 @@ body {
         max-width: calc(100vw - 2 * var(--spacing-md));
     }
 
-    /* Mobile shortcuts button and popup */
-    .shortcuts-button {
-        top: var(--spacing-md);
-        right: var(--spacing-md);
-        width: 44px;
-        height: 44px;
-    }
-
     .shortcuts-popup {
-        top: 60px;
-        right: var(--spacing-md);
         left: var(--spacing-md);
-        min-width: auto;
         max-width: calc(100vw - 2 * var(--spacing-md));
     }
 
