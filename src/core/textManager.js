@@ -296,6 +296,9 @@ class TextManager {
                 textarea.style.overflowX = 'auto'; // Allow horizontal scrolling if needed
                 textarea.style.overflowY = 'hidden'; // No vertical scrolling for single line
                 textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                textarea.style.lineHeight = '24px'; // Consistent line height
+                textarea.style.paddingTop = '8px';
+                textarea.style.paddingBottom = '8px';
                 testElement.remove();
             } else {
                 // Content exceeds max chars - make it scrollable horizontally
@@ -306,25 +309,51 @@ class TextManager {
                 textarea.style.overflowX = 'scroll';
                 textarea.style.overflowY = 'hidden';
                 textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
+                textarea.style.lineHeight = '24px'; // Consistent line height
+                textarea.style.paddingTop = '8px';
+                textarea.style.paddingBottom = '8px';
                 testElement.remove();
             }
         } else {
             // Multi-line content with manual breaks - expand vertically
-            // PRESERVE the expanded width if it was previously expanded
+            // PRESERVE the expanded width if it was previously expanded, but also check if we need more width
             const preservedWidth = wasExpanded ? Math.max(currentWidth, 120) : 120;
+
+            // Check if any line needs more width than current
+            const lines = text.split('\n');
+            let maxNeededWidth = preservedWidth;
+
+            lines.forEach(line => {
+                if (line.trim()) {
+                    const testElement = this.createMeasureElement(line);
+                    const lineWidth = testElement.offsetWidth + 20;
+                    maxNeededWidth = Math.max(maxNeededWidth, lineWidth);
+                    testElement.remove();
+                }
+            });
 
             const maxLines = 50;
             const lineHeight = 24;
             const minHeight = 40;
             const maxHeight = maxLines * lineHeight;
 
-            const newHeight = Math.min(maxHeight, Math.max(minHeight, textarea.scrollHeight));
+            // Calculate height based on actual line count instead of scrollHeight
+            const lineCount = lines.length;
+            const paddingTotal = 16; // 8px top + 8px bottom
+            const calculatedHeight = Math.max(minHeight, (lineCount * lineHeight) + paddingTotal);
+            const newHeight = Math.min(maxHeight, calculatedHeight);
+
             textarea.style.height = newHeight + 'px';
-            textarea.style.width = preservedWidth + 'px'; // Use preserved width instead of fixed 120px
+            textarea.style.width = maxNeededWidth + 'px'; // Use the maximum needed width
             textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping for multi-line
 
+            // Ensure consistent line-height and vertical alignment
+            textarea.style.lineHeight = lineHeight + 'px';
+            textarea.style.paddingTop = '8px';
+            textarea.style.paddingBottom = '8px';
+
             // Enable vertical scrolling if content exceeds max height
-            if (textarea.scrollHeight > maxHeight) {
+            if (calculatedHeight > maxHeight) {
                 textarea.style.overflowY = 'scroll'; // Use scroll to ensure scrollbar shows when focused
             } else {
                 textarea.style.overflowY = 'hidden';
