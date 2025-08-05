@@ -105,7 +105,7 @@ class TextManager {
             }, 250);
 
             this.autoResize(input);
-            
+
             // Only trigger highlighting for longer text or when operators are present
             const text = input.value || '';
             if (text.length > 3 || /[+\-*/$%()]/.test(text)) {
@@ -332,7 +332,7 @@ class TextManager {
         if (!element || !element.highlightOverlay) return;
 
         const text = element.input.value || '';
-        
+
         // Skip highlighting for very short text to improve performance
         if (text.length < 2) {
             element.highlightOverlay.innerHTML = '';
