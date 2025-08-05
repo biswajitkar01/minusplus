@@ -133,6 +133,11 @@ class StorageManager {
                 formatted: element.calculation.formatted,
                 numbers: element.calculation.numbers
             } : null,
+            width: element.width || 120,
+            height: element.height || 40,
+            whiteSpace: element.whiteSpace || 'nowrap',
+            overflowX: element.overflowX || 'auto',
+            overflowY: element.overflowY || 'hidden',
             timestamp: Date.now()
         }));
     }
@@ -149,7 +154,12 @@ class StorageManager {
                 worldX: element.worldX || 0,
                 worldY: element.worldY || 0,
                 text: element.text || '',
-                calculation: element.calculation || null
+                calculation: element.calculation || null,
+                width: element.width || 120,
+                height: element.height || 40,
+                whiteSpace: element.whiteSpace || 'nowrap',
+                overflowX: element.overflowX || 'auto',
+                overflowY: element.overflowY || 'hidden'
             }));
     }
 

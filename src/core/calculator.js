@@ -29,9 +29,9 @@ class CalculationEngine {
 
         const cleanText = text.trim();
 
-        // Detect calculation type
+        // Detect calculation type - prioritize mixed calculations
         if (cleanText.includes('\n')) {
-            return this.calculateVerticalColumn(cleanText);
+            return this.calculateMixed(cleanText);
         } else if (cleanText.includes(' ') || /[-+×*÷\/]/.test(cleanText)) {
             // Check for spaces OR mathematical operators
             return this.calculateHorizontalSequence(cleanText);
@@ -40,6 +40,71 @@ class CalculationEngine {
         }
 
         return null;
+    }
+
+    // Calculate mixed (both horizontal lines and vertical column)
+    calculateMixed(text) {
+        const lines = text.split('\n');
+        const calculations = [];
+        let allNumbers = [];
+
+        // First, calculate each horizontal line
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            if (line.includes(' ') || /[-+×*÷\/]/.test(line)) {
+                // This line has horizontal calculation
+                const horizontalResult = this.calculateHorizontalSequence(line);
+                if (horizontalResult && horizontalResult.numbers.length > 1) {
+                    calculations.push({
+                        type: 'horizontal',
+                        line: i,
+                        result: horizontalResult,
+                        numbers: horizontalResult.numbers
+                    });
+                    // Add the result to the vertical calculation
+                    allNumbers.push(horizontalResult.result);
+                } else {
+                    // Single number, add to vertical calculation
+                    const num = this.parseNumber(line);
+                    if (!isNaN(num)) {
+                        allNumbers.push(num);
+                    }
+                }
+            } else {
+                // Single number, add to vertical calculation
+                const num = this.parseNumber(line);
+                if (!isNaN(num)) {
+                    allNumbers.push(num);
+                }
+            }
+        }
+
+        // Then calculate the vertical total
+        let verticalResult = null;
+        if (allNumbers.length > 1) {
+            const sum = allNumbers.reduce((acc, num) => acc + num, 0);
+            verticalResult = {
+                type: 'vertical',
+                numbers: allNumbers,
+                result: sum,
+                formatted: this.formatResult(sum)
+            };
+        }
+
+        // Return mixed calculation result
+        if (calculations.length > 0 || (verticalResult && allNumbers.length > 1)) {
+            return {
+                type: 'mixed',
+                horizontal: calculations,
+                vertical: verticalResult,
+                original: text
+            };
+        }
+
+        // Fallback to simple vertical calculation if no horizontal calculations found
+        return this.calculateVerticalColumn(text);
     }
 
     // Calculate vertical column (line-separated numbers)
