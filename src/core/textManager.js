@@ -85,6 +85,12 @@ class TextManager {
             }, 150);
 
             this.autoResize(input);
+
+            // Update result position immediately to prevent jittering
+            const element = this.textElements.get(id);
+            if (element && element.resultElement && element.resultElement.style.display !== 'none') {
+                this.updateElementPosition(element);
+            }
         });
 
         // Paste handler
@@ -133,8 +139,21 @@ class TextManager {
 
         element.calculation = calculation;
 
-        if (calculation && calculation.numbers.length > 1) {
-            this.displayResult(element, calculation);
+        // Clear inline results first if text is empty or no calculation
+        if (!text.trim() || !calculation) {
+            this.clearInlineResults(element);
+            this.hideResult(element);
+            return;
+        }
+
+        if (calculation) {
+            if (calculation.type === 'mixed') {
+                this.displayMixedResults(element, calculation);
+            } else if (calculation.numbers && calculation.numbers.length > 1) {
+                this.displayResult(element, calculation);
+            } else {
+                this.hideResult(element);
+            }
         } else {
             this.hideResult(element);
         }
@@ -172,10 +191,83 @@ class TextManager {
         }
     }
 
+    displayMixedResults(element, calculation) {
+        // Clear any existing inline results
+        this.clearInlineResults(element);
+
+        // Create inline result elements for horizontal calculations
+        if (calculation.horizontal && calculation.horizontal.length > 0) {
+            calculation.horizontal.forEach(horizCalc => {
+                this.createInlineResult(element, horizCalc.line, horizCalc.result.formatted);
+            });
+        }
+
+        // Display vertical result below (if exists)
+        if (calculation.vertical) {
+            this.displayResult(element, calculation.vertical);
+        } else {
+            this.hideResult(element);
+        }
+    }
+
+    createInlineResult(element, lineIndex, resultText) {
+        const textarea = element.input;
+        const lines = textarea.value.split('\n');
+
+        if (lineIndex >= lines.length) return;
+
+        // Create inline result element (similar to main result)
+        const inlineResult = document.createElement('div');
+        inlineResult.className = 'inline-calculation-result';
+        inlineResult.textContent = `= ${resultText}`;
+        inlineResult.style.position = 'absolute';
+        inlineResult.style.zIndex = '1001';
+
+        // Store the line index on the element for repositioning
+        inlineResult.lineIndex = lineIndex;
+
+        // Position it to the right of the textarea for the specific line
+        this.positionInlineResult(element, inlineResult, lineIndex);
+
+        // Store reference for cleanup
+        if (!element.inlineResults) {
+            element.inlineResults = [];
+        }
+        element.inlineResults.push(inlineResult);
+
+        document.body.appendChild(inlineResult);
+    }
+
+    positionInlineResult(element, inlineResult, lineIndex) {
+        const textarea = element.input;
+        const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
+
+        // Calculate line position
+        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 24;
+        const textareaWidth = parseInt(textarea.style.width) || 120;
+
+        // Position to the right of the textarea at the specific line
+        inlineResult.style.left = (screenPos.x + textareaWidth + 10) + 'px';
+        inlineResult.style.top = (screenPos.y + (lineIndex * lineHeight) + 8) + 'px';
+    }
+
+    clearInlineResults(element) {
+        if (element.inlineResults) {
+            element.inlineResults.forEach(result => {
+                if (result.parentNode) {
+                    result.parentNode.removeChild(result);
+                }
+            });
+            element.inlineResults = [];
+        }
+    }
+
     hideResult(element) {
         if (element.resultElement) {
             element.resultElement.style.display = 'none';
         }
+        // Also clear inline results when hiding
+        this.clearInlineResults(element);
     }
 
     autoResize(textarea) {
@@ -273,6 +365,20 @@ class TextManager {
             element.resultElement.style.left = screenPos.x + 'px';
             element.resultElement.style.top = (screenPos.y + inputHeight + 5) + 'px';
         }
+
+        // Update inline result positions
+        if (element.inlineResults && element.inlineResults.length > 0) {
+            this.updateInlineResultPositions(element);
+        }
+    }
+
+    updateInlineResultPositions(element) {
+        if (!element.inlineResults) return;
+
+        element.inlineResults.forEach((inlineResult) => {
+            // Use the stored line index instead of array index
+            this.positionInlineResult(element, inlineResult, inlineResult.lineIndex);
+        });
     }
 
     // Canvas transform callback
@@ -283,6 +389,9 @@ class TextManager {
     removeElement(id) {
         const element = this.textElements.get(id);
         if (!element) return;
+
+        // Clean up inline results
+        this.clearInlineResults(element);
 
         // Remove from DOM
         if (element.input.parentNode) {
