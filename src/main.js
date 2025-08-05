@@ -50,7 +50,130 @@ class MinusPlusApp {
             this.markDirty();
         });
 
-        // Mouse wheel - zoom
+        // Touch tap - create new calculation on mobile
+        let touchStartTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        let hasMoved = false;
+
+        // Pinch-to-zoom variables
+        let initialPinchDistance = 0;
+        let lastPinchDistance = 0;
+        let isPinching = false;
+        let pinchCenter = { x: 0, y: 0 };
+
+        this.canvas.canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartTime = Date.now();
+                const touch = e.touches[0];
+                const rect = this.canvas.canvas.getBoundingClientRect();
+                touchStartPos = {
+                    x: touch.clientX - rect.left,
+                    y: touch.clientY - rect.top
+                };
+                hasMoved = false;
+                isPinching = false;
+            } else if (e.touches.length === 2) {
+                // Start pinch-to-zoom
+                isPinching = true;
+                hasMoved = true; // Prevent tap from triggering
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const rect = this.canvas.canvas.getBoundingClientRect();
+
+                // Calculate initial distance between touches
+                initialPinchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                lastPinchDistance = initialPinchDistance;
+
+                // Calculate center point between touches
+                pinchCenter = {
+                    x: ((touch1.clientX + touch2.clientX) / 2) - rect.left,
+                    y: ((touch1.clientY + touch2.clientY) / 2) - rect.top
+                };
+
+                e.preventDefault();
+            }
+        });
+
+        this.canvas.canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && !isPinching) {
+                const touch = e.touches[0];
+                const rect = this.canvas.canvas.getBoundingClientRect();
+                const currentPos = {
+                    x: touch.clientX - rect.left,
+                    y: touch.clientY - rect.top
+                };
+
+                const distance = Math.sqrt(
+                    Math.pow(currentPos.x - touchStartPos.x, 2) +
+                    Math.pow(currentPos.y - touchStartPos.y, 2)
+                );
+
+                if (distance > 10) {
+                    hasMoved = true;
+                    // Pan the canvas
+                    const deltaX = currentPos.x - touchStartPos.x;
+                    const deltaY = currentPos.y - touchStartPos.y;
+                    this.canvas.pan(deltaX, deltaY);
+                    touchStartPos = currentPos;
+                    this.textManager.onCanvasTransform();
+                }
+                e.preventDefault();
+            } else if (e.touches.length === 2 && isPinching) {
+                // Handle pinch-to-zoom
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const rect = this.canvas.canvas.getBoundingClientRect();
+
+                // Calculate current distance between touches
+                const currentPinchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+
+                // Calculate zoom factor based on distance change
+                const zoomFactor = currentPinchDistance / lastPinchDistance;
+
+                // Apply zoom centered on pinch point
+                this.canvas.zoom(zoomFactor, pinchCenter.x, pinchCenter.y);
+
+                // Update text element positions after zoom
+                this.textManager.onCanvasTransform();
+
+                lastPinchDistance = currentPinchDistance;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        this.canvas.canvas.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length === 1 && !isPinching) {
+                const touchDuration = Date.now() - touchStartTime;
+
+                // If it's a quick tap without movement, create text input
+                if (touchDuration < 300 && !hasMoved) {
+                    const touch = e.changedTouches[0];
+                    const rect = this.canvas.canvas.getBoundingClientRect();
+                    const tapPos = {
+                        x: touch.clientX - rect.left,
+                        y: touch.clientY - rect.top
+                    };
+
+                    const worldPos = this.canvas.screenToWorld(tapPos.x, tapPos.y);
+                    this.textManager.createTextInput(worldPos.x, worldPos.y);
+                    this.hideHelpIndicator();
+                    this.markDirty();
+                }
+                e.preventDefault();
+            } else if (e.touches.length < 2) {
+                // End pinch-to-zoom when less than 2 touches remain
+                isPinching = false;
+                initialPinchDistance = 0;
+                lastPinchDistance = 0;
+            }
+        }, { passive: false });        // Mouse wheel - zoom
         this.canvas.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = this.canvas.canvas.getBoundingClientRect();
@@ -66,6 +189,10 @@ class MinusPlusApp {
         // Mouse drag - pan (middle mouse or Ctrl+click)
         let isDragging = false;
         let lastPos = { x: 0, y: 0 };
+
+        // Touch support variables
+        let isTouchDragging = false;
+        let touchLastPos = { x: 0, y: 0 };
 
         this.canvas.canvas.addEventListener('mousedown', (e) => {
             if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
