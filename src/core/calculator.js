@@ -128,6 +128,45 @@ class CalculationEngine {
 
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
+        // <start of change 0004: Fix regex to properly detect spaces INSIDE parentheses>
+        // Check if it has parentheses 
+        if (text.includes('(') && text.includes(')')) {
+            // Check if there are spaces INSIDE parentheses - not just around them
+            const hasSpacesInsideParens = /\(\s/.test(text) || /\s\)/.test(text);
+
+            if (hasSpacesInsideParens) {
+                // This is math expression - DON'T treat spaces as addition
+                try {
+                    let cleanText = text
+                        .replace(/×/g, '*')
+                        .replace(/÷/g, '/');
+
+                    // Handle implicit multiplication: "200 ( 200 )" becomes "200 * ( 200 )"
+                    cleanText = cleanText.replace(/(\d+)\s+\(/g, '$1*(');
+                    cleanText = cleanText.replace(/\)\s+(\d+)/g, ')*$1');
+                    // Remove any remaining unsafe characters
+                    cleanText = cleanText.replace(/[^0-9+\-*/.() ]/g, '');
+                    const result = Function('"use strict"; return (' + cleanText + ')')();
+                    if (typeof result === 'number' && !isNaN(result)) {
+                        // Extract the original numbers from the expression for UI display
+                        const originalNumbers = text.match(/\d+/g)?.map(num => parseFloat(num)) || [result];
+                        return {
+                            type: 'horizontal',
+                            numbers: originalNumbers, // Use original numbers instead of just [result]
+                            result: result,
+                            operation: 'mathematical',
+                            formatted: this.formatResult(result),
+                            original: text
+                        };
+                    }
+                } catch (error) {
+                    return null; // Don't fall through if math expression fails
+                }
+            }
+            // If no spaces INSIDE parentheses, it will be handled by parseNumber as accounting format
+        }
+        // <end of change 0004>
+
         // First try to parse as a mathematical expression (no spaces required)
         const expressionResult = this.parseExpression([text]);
         if (expressionResult && expressionResult.numbers.length > 1) {
