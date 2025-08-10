@@ -128,44 +128,51 @@ class CalculationEngine {
 
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
-        // <start of change 0004: Fix regex to properly detect spaces INSIDE parentheses>
-        // Check if it has parentheses 
+        // Simple parentheses rule:
+        // - If any (...) group contains more than a plain number, treat entire line as a math expression.
+        // - If parentheses wrap a single number (accounting), fall through to existing parsing.
         if (text.includes('(') && text.includes(')')) {
-            // Check if there are spaces INSIDE parentheses - not just around them
-            const hasSpacesInsideParens = /\(\s/.test(text) || /\s\)/.test(text);
+            const paren = /\(([^()]*)\)/g;
+            let hasMathGroup = false;
+            let m;
+            while ((m = paren.exec(text)) !== null) {
+                const inner = m[1].trim();
+                // Plain number (optional leading - and commas/decimals/currency)
+                const isPlainNumber = /^-?\$?[0-9][0-9,]*(?:\.[0-9]+)?$/.test(inner);
+                if (!isPlainNumber) { hasMathGroup = true; break; }
+            }
 
-            if (hasSpacesInsideParens) {
-                // This is math expression - DON'T treat spaces as addition
+            if (hasMathGroup) {
                 try {
                     let cleanText = text
                         .replace(/×/g, '*')
                         .replace(/÷/g, '/');
 
-                    // Handle implicit multiplication: "200 ( 200 )" becomes "200 * ( 200 )"
-                    cleanText = cleanText.replace(/(\d+)\s+\(/g, '$1*(');
-                    cleanText = cleanText.replace(/\)\s+(\d+)/g, ')*$1');
-                    // Remove any remaining unsafe characters
-                    cleanText = cleanText.replace(/[^0-9+\-*/.() ]/g, '');
+                    // Implicit multiplication (number)( ... ) or (...)number
+                    cleanText = cleanText.replace(/(\d)\s*\(/g, '$1*(');
+                    cleanText = cleanText.replace(/\)\s*(\d)/g, ')*$1');
+
+                    // Allow only safe characters
+                    cleanText = cleanText.replace(/[^0-9+\-*/().\s]/g, '');
+
                     const result = Function('"use strict"; return (' + cleanText + ')')();
                     if (typeof result === 'number' && !isNaN(result)) {
-                        // Extract the original numbers from the expression for UI display
-                        const originalNumbers = text.match(/\d+/g)?.map(num => parseFloat(num)) || [result];
+                        const originalNumbers = text.match(/\d+\.?\d*/g)?.map(n => parseFloat(n)) || [result];
                         return {
                             type: 'horizontal',
-                            numbers: originalNumbers, // Use original numbers instead of just [result]
-                            result: result,
+                            numbers: originalNumbers,
+                            result,
                             operation: 'mathematical',
                             formatted: this.formatResult(result),
                             original: text
                         };
                     }
-                } catch (error) {
-                    return null; // Don't fall through if math expression fails
+                } catch (e) {
+                    return null;
                 }
             }
-            // If no spaces INSIDE parentheses, it will be handled by parseNumber as accounting format
+            // If no math-group parentheses were found, proceed with existing parsing
         }
-        // <end of change 0004>
 
         // First try to parse as a mathematical expression (no spaces required)
         const expressionResult = this.parseExpression([text]);
