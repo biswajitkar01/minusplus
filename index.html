@@ -4,8 +4,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MinusPlus - Infinite Calculator</title>
-    <meta name="description" content="Revolutionary calculator with infinite dark canvas interface">
+    <title>MinusPlus — Fast Online Calculator (Infinite Canvas)</title>
+    <meta name="description"
+        content="MinusPlus is a fast online calculator on an infinite canvas. Type anywhere, auto‑sum columns and rows, handle accounting parentheses, works offline, privacy‑friendly.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://minusplus.app/">
+    <meta name="keywords"
+        content="online calculator, fast calculator, infinite canvas calculator, column sum, vertical sum, horizontal sum, accounting calculator, spreadsheet alternative, quick math, free calculator">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="apple-touch-icon" href="src/assets/favicon-32.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+
+    <!-- Open Graph for rich sharing (Product Hunt, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MinusPlus — Fast, Infinite Canvas Calculator">
+    <meta property="og:description"
+        content="Do math anywhere on an infinite canvas. Type numbers, hit space/enter to auto‑sum columns and rows. Super fast, privacy‑friendly, works offline.">
+    <meta property="og:url" content="https://minusplus.app/">
+    <meta property="og:image" content="https://minusplus.app/src/assets/favicon-32.png">
+    <meta property="og:site_name" content="MinusPlus">
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="MinusPlus — Fast, Infinite Canvas Calculator">
+    <meta name="twitter:description"
+        content="Do math anywhere on an infinite canvas. Auto‑sum columns and rows as you type.">
+    <meta name="twitter:image" content="https://minusplus.app/src/assets/favicon-32.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [{
+                    "@type": "WebSite",
+                    "name": "MinusPlus",
+                    "url": "https://minusplus.app/",
+                    "description": "Fast online calculator on an infinite canvas. Auto-sum columns and rows, privacy-friendly, works offline.",
+                    "inLanguage": "en"
+                },
+                {
+                    "@type": "Organization",
+                    "name": "MinusPlus",
+                    "url": "https://minusplus.app/",
+                    "logo": "https://minusplus.app/src/assets/favicon.svg"
+                },
+                {
+                    "@type": "WebApplication",
+                    "name": "MinusPlus Calculator",
+                    "applicationCategory": "Calculator",
+                    "operatingSystem": "Web",
+                    "url": "https://minusplus.app/",
+                    "description": "High-performance calculator with an infinite dark canvas. Type anywhere, auto-calc columns and sequences.",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD"
+                    }
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [{
+                            "@type": "Question",
+                            "name": "How do I add numbers?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Type numbers separated by spaces for horizontal addition, or new lines for vertical column sums. Results update as you type."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Does MinusPlus work offline?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. It stores everything locally in your browser and works without an internet connection."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9MJLW4B550"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-9MJLW4B550');
+    </script>
+
+    <!-- Styles -->
     <link rel="stylesheet" href="src/styles/main.css">
     <link rel="stylesheet" href="src/styles/canvas.css">
     <link rel="stylesheet" href="src/styles/themes.css">
@@ -14,9 +107,25 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="src/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="src/assets/favicon-16.png">
+
+    <!-- Language hints -->
+    <link rel="alternate" href="https://minusplus.app/" hreflang="en" />
 </head>
 
 <body>
+    <noscript>
+        <div
+            style="padding:16px;background:#1a1a1a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+            <h1 style="margin:0 0 8px;">MinusPlus — Online Calculator</h1>
+            <p style="margin:0;opacity:.8;">JavaScript is disabled. MinusPlus is a fast online calculator that lets you
+                add numbers in columns and rows on an infinite canvas. Enable JavaScript to use the app.</p>
+        </div>
+    </noscript>
     <div id="app">
         <canvas id="main-canvas"></canvas>
         <div id="ui-overlay">
@@ -103,7 +212,21 @@
 
     <!-- Main application script -->
     <script type="module" src="src/main.js"></script>
+
+    <!-- Accessible SEO content (kept visually hidden; improves discoverability) -->
+    <section class="visually-hidden">
+        <h1>MinusPlus — Fast Online Calculator on an Infinite Canvas</h1>
+        <p>MinusPlus is a blazing‑fast, privacy‑friendly online calculator. Click anywhere to type numbers, auto‑sum
+            vertical columns and horizontal sequences, handle accounting parentheses, and work offline — all on a smooth
+            infinite canvas.</p>
+        <h2>Features</h2>
+        <ul>
+            <li>Auto‑sum columns (line‑separated) and rows (space‑separated)</li>
+            <li>Correct math with parentheses and implicit multiplication</li>
+            <li>Instant search highlighting and clipboard copy</li>
+            <li>Local autosave and quick reset (Ctrl + 0)</li>
+        </ul>
+    </section>
 </body>
 
 </html>
-</script>

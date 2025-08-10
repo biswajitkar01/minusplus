@@ -38,6 +38,12 @@ class MinusPlusApp {
     }
 
     setupEventHandlers() {
+        // Debounced zoom tracking
+        this.trackZoomDebounced = this.debounce(() => {
+            const vp = this.canvas.getViewport?.();
+            if (vp) this.track('zoom', { zoom: Number(vp.zoom?.toFixed?.(3) || vp.zoom || 1) });
+        }, 300);
+
         // Canvas click - create new calculation
         this.canvas.canvas.addEventListener('click', (e) => {
             const rect = this.canvas.canvas.getBoundingClientRect();
@@ -48,6 +54,9 @@ class MinusPlusApp {
             this.textManager.createTextInput(worldPos.x, worldPos.y);
             this.hideHelpIndicator();
             this.markDirty();
+            // Analytics
+            const vp = this.canvas.getViewport?.();
+            this.track('input_created', { method: 'click', zoom: vp?.zoom });
         });
 
         // Touch tap - create new calculation on mobile
@@ -144,6 +153,7 @@ class MinusPlusApp {
                 this.textManager.onCanvasTransform();
 
                 lastPinchDistance = currentPinchDistance;
+                this.trackZoomDebounced();
                 e.preventDefault();
             }
         }, { passive: false });
@@ -165,6 +175,9 @@ class MinusPlusApp {
                     this.textManager.createTextInput(worldPos.x, worldPos.y);
                     this.hideHelpIndicator();
                     this.markDirty();
+                    // Analytics
+                    const vp = this.canvas.getViewport?.();
+                    this.track('input_created', { method: 'tap', zoom: vp?.zoom });
                 }
                 e.preventDefault();
             } else if (e.touches.length < 2) {
@@ -184,11 +197,13 @@ class MinusPlusApp {
 
             // Update text element positions after zoom
             this.textManager.onCanvasTransform();
+            this.trackZoomDebounced();
         });
 
         // Mouse drag - pan (Ctrl+click)
         let isDragging = false;
         let lastPos = { x: 0, y: 0 };
+        let panDistance = 0;
 
         // Touch support variables
         let isTouchDragging = false;
@@ -198,6 +213,7 @@ class MinusPlusApp {
             if (e.button === 0 && e.ctrlKey) {
                 isDragging = true;
                 lastPos = { x: e.clientX, y: e.clientY };
+                panDistance = 0;
                 e.preventDefault();
                 this.canvas.canvas.style.cursor = 'grab';
             }
@@ -209,6 +225,9 @@ class MinusPlusApp {
                 const deltaY = e.clientY - lastPos.y;
                 this.canvas.pan(deltaX, deltaY);
                 lastPos = { x: e.clientX, y: e.clientY };
+
+                // Accumulate pan distance for analytics
+                panDistance += Math.hypot(deltaX, deltaY);
 
                 // Show grabbing cursor while dragging
                 this.canvas.canvas.style.cursor = 'grabbing';
@@ -222,6 +241,11 @@ class MinusPlusApp {
             if (isDragging) {
                 isDragging = false;
                 this.canvas.canvas.style.cursor = 'crosshair';
+                // Track pan once when drag ends
+                if (panDistance > 0) {
+                    this.track('pan', { distance: Math.round(panDistance) });
+                    panDistance = 0;
+                }
             }
         });
 
@@ -259,30 +283,48 @@ class MinusPlusApp {
         });
 
         // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
+        const onKeyDown = (e) => {
+            // Reset view: Ctrl+0 only (support main row and numpad 0).
+            // On macOS, use Control+0; Command+0 is left to the browser's default zoom reset.
+            if (e.ctrlKey && (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                this.canvas.resetView();
+                this.textManager.onCanvasTransform?.();
+                this.highlighter.updateHighlightPositions?.();
+                this.track('reset_view', { source: 'keyboard' });
+                return false;
+            }
+
+            // Allow Cmd+0 to pass through on macOS
+            if (e.metaKey && (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0')) {
+                return; // Do not block browser default
+            }
+
             if (e.ctrlKey || e.metaKey) {
                 switch (e.key) {
-                    case '0':
-                        e.preventDefault();
-                        this.canvas.resetView();
-                        // Update text element positions after canvas reset
-                        this.textManager.onCanvasTransform();
-                        break;
                     case 's':
                         e.preventDefault();
+                        e.stopPropagation();
                         this.saveState();
-                        break;
+                        return false;
                 }
             }
 
             if (e.key === 'Escape') {
                 this.textManager.clearActiveInput();
             }
-        });
+        };
+        // Capture phase so Ctrl+0 is handled early; Cmd+0 is allowed to pass through on macOS
+        document.addEventListener('keydown', onKeyDown, true);
+        window.addEventListener('keydown', onKeyDown, true);
 
         // Window resize
         window.addEventListener('resize', this.debounce(() => {
             this.canvas.handleResize();
+            this.textManager.onCanvasTransform?.();
+            this.highlighter.updateHighlightPositions?.();
         }, 150));
 
         // Cleanup on page unload
@@ -408,6 +450,9 @@ class MinusPlusApp {
         console.log('User confirmed:', confirmed);
 
         if (confirmed) {
+            // Track count cleared
+            this.track('clear_all', { count: elementCount });
+
             // Clear all calculations
             const clearedCount = this.textManager.clearAllCalculations();
 
@@ -457,12 +502,14 @@ class MinusPlusApp {
         this.shortcutsPopup.classList.remove('hidden');
         this.shortcutsPopup.classList.add('visible');
         this.shortcutsPopup.style.display = 'block'; // Ensure it's visible
+        this.track('shortcuts_popup', { action: 'show' });
     }
 
     hideShortcutsPopup() {
         console.log('Hiding shortcuts popup');
         this.shortcutsPopup.classList.remove('visible');
         this.shortcutsPopup.classList.add('hidden');
+        this.track('shortcuts_popup', { action: 'hide' });
     }
 
     hideHelpIndicator() {
@@ -499,15 +546,18 @@ class MinusPlusApp {
                     this.clearAllButton.classList.add('visible');
                 }
                 console.log('Previous state loaded successfully');
+                this.track('app_ready', { restored: true, elements: state.elements.length });
             } else {
                 // No previous state - ensure we start with a centered, grid-aligned view
                 this.canvas.resetView();
                 console.log('No previous state - starting with centered view');
+                this.track('app_ready', { restored: false, elements: 0 });
             }
         } catch (error) {
             console.warn('Failed to load previous state:', error);
             // On error, also reset to center
             this.canvas.resetView();
+            this.track('app_ready', { restored: false, error: true });
         }
     }
 
@@ -533,6 +583,21 @@ class MinusPlusApp {
 
     markDirty() {
         this.isDirty = true;
+    }
+
+    // Lightweight analytics helper
+    track(eventName, params = {}) {
+        try {
+            if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+                window.gtag('event', eventName, {
+                    send_to: 'G-9MJLW4B550',
+                    app: 'MinusPlus',
+                    ...params
+                });
+            }
+        } catch (e) {
+            // no-op
+        }
     }
 
     debounce(func, wait) {

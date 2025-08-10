@@ -20,9 +20,10 @@
 
     --text-on-accent: #ffffff;
 
-    --highlight-primary: rgba(0, 122, 204, 0.3);
-    --highlight-match: rgba(255, 165, 0, 0.3);
-    --highlight-result: rgba(50, 205, 50, 0.3);
+    /* Clean selection colors - VS Code style */
+    --selection-bg: #264f78;
+    --selection-text: #ffffff;
+    --highlight-match: #515c6a;
 
     --border-default: rgba(255, 255, 255, 0.2);
     --border-focus: #007acc;
@@ -423,21 +424,14 @@ body {
     border-color: rgba(50, 205, 50, 0.5);
 }
 
-/* Text highlighting styles */
+/* Clean text highlighting - VS Code style */
 .highlight-match {
-    background-color: var(--highlight-match);
-    color: var(--text-primary);
-    padding: 1px 2px;
+    background: var(--highlight-match);
     border-radius: 2px;
-    font-weight: var(--font-weight-medium);
+    padding: 0 1px;
 }
 
-.text-highlight-overlay {
-    pointer-events: none;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    overflow: hidden;
-}
+/* Remove old overlay styles - use native selection instead */
 
 /* Copy feedback styles */
 .copy-feedback {
@@ -552,15 +546,15 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* Selection styles */
+/* Modern text selection - VS Code style */
 ::selection {
-    background: var(--highlight-primary);
-    color: var(--text-primary);
+    background: var(--selection-bg);
+    color: var(--selection-text);
 }
 
 ::-moz-selection {
-    background: var(--highlight-primary);
-    color: var(--text-primary);
+    background: var(--selection-bg);
+    color: var(--selection-text);
 }
 
 /* Focus styles for accessibility */
@@ -712,4 +706,17 @@ body {
 
 .pointer-events-auto {
     pointer-events: auto;
+}
+
+/* Utility: visually hidden (accessible to screen readers) */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }

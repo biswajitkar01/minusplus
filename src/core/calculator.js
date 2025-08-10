@@ -128,6 +128,52 @@ class CalculationEngine {
 
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
+        // Simple parentheses rule:
+        // - If any (...) group contains more than a plain number, treat entire line as a math expression.
+        // - If parentheses wrap a single number (accounting), fall through to existing parsing.
+        if (text.includes('(') && text.includes(')')) {
+            const paren = /\(([^()]*)\)/g;
+            let hasMathGroup = false;
+            let m;
+            while ((m = paren.exec(text)) !== null) {
+                const inner = m[1].trim();
+                // Plain number (optional leading - and commas/decimals/currency)
+                const isPlainNumber = /^-?\$?[0-9][0-9,]*(?:\.[0-9]+)?$/.test(inner);
+                if (!isPlainNumber) { hasMathGroup = true; break; }
+            }
+
+            if (hasMathGroup) {
+                try {
+                    let cleanText = text
+                        .replace(/×/g, '*')
+                        .replace(/÷/g, '/');
+
+                    // Implicit multiplication (number)( ... ) or (...)number
+                    cleanText = cleanText.replace(/(\d)\s*\(/g, '$1*(');
+                    cleanText = cleanText.replace(/\)\s*(\d)/g, ')*$1');
+
+                    // Allow only safe characters
+                    cleanText = cleanText.replace(/[^0-9+\-*/().\s]/g, '');
+
+                    const result = Function('"use strict"; return (' + cleanText + ')')();
+                    if (typeof result === 'number' && !isNaN(result)) {
+                        const originalNumbers = text.match(/\d+\.?\d*/g)?.map(n => parseFloat(n)) || [result];
+                        return {
+                            type: 'horizontal',
+                            numbers: originalNumbers,
+                            result,
+                            operation: 'mathematical',
+                            formatted: this.formatResult(result),
+                            original: text
+                        };
+                    }
+                } catch (e) {
+                    return null;
+                }
+            }
+            // If no math-group parentheses were found, proceed with existing parsing
+        }
+
         // First try to parse as a mathematical expression (no spaces required)
         const expressionResult = this.parseExpression([text]);
         if (expressionResult && expressionResult.numbers.length > 1) {

@@ -49,12 +49,11 @@
     --border-error: var(--accent-red);
     --border-success: var(--accent-green);
 
-    /* Highlight colors */
-    --highlight-primary: rgba(0, 122, 204, 0.3);
-    --highlight-secondary: rgba(255, 255, 255, 0.1);
-    --highlight-match: rgba(255, 165, 0, 0.3);
-    --highlight-result: rgba(50, 205, 50, 0.3);
-    --highlight-selection: rgba(0, 122, 204, 0.2);
+    /* Clean highlight colors - VS Code style */
+    --selection-bg: #264f78;
+    --selection-text: #ffffff;
+    --highlight-match: #515c6a;
+    --highlight-match-active: #264f78;
 
     /* Surface colors */
     --surface-1: var(--bg-secondary);

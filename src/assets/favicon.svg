@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <!-- Dark background -->
+    <rect width="64" height="64" rx="12" fill="#1a1a1a" />
+    <!-- Minus (left) in red -->
+    <rect x="12" y="30" width="16" height="4" fill="#ff4444" />
+    <!-- Plus (right) in green -->
+    <rect x="40" y="22" width="4" height="20" fill="#32cd32" />
+    <rect x="32" y="30" width="20" height="4" fill="#32cd32" />
+</svg>

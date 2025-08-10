@@ -32,20 +32,24 @@ class InfiniteCanvas {
     }
 
     setupCanvas() {
-        // High DPI display support
+        // High DPI display support (keep it simple and robust)
         const dpr = window.devicePixelRatio || 1;
-        const rect = this.canvas.getBoundingClientRect();
 
-        this.viewport.width = rect.width;
-        this.viewport.height = rect.height;
+        // Use CSS size from the element itself (100% in CSS) to handle resizes correctly
+        const cssWidth = this.canvas.clientWidth || window.innerWidth;
+        const cssHeight = this.canvas.clientHeight || window.innerHeight;
 
-        this.canvas.width = this.viewport.width * dpr;
-        this.canvas.height = this.viewport.height * dpr;
-        this.ctx.scale(dpr, dpr);
+        this.viewport.width = cssWidth;
+        this.viewport.height = cssHeight;
 
-        this.canvas.style.width = this.viewport.width + 'px';
-        this.canvas.style.height = this.viewport.height + 'px';
+        // Set backing store size in device pixels
+        this.canvas.width = Math.round(cssWidth * dpr);
+        this.canvas.height = Math.round(cssHeight * dpr);
 
+        // Reset transform and scale once per setup (avoids accumulating scales)
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Do NOT set inline style width/height; let CSS keep it at 100%
         // Force re-render after resize to fix grid alignment
         this.isDirty = true;
 

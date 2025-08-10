@@ -48,8 +48,8 @@
     /* Prevent sub-pixel rendering issues */
     transform: translateZ(0);
 
-    /* Smooth transitions for position updates */
-    transition: left 0.1s ease-out, top 0.1s ease-out;
+    /* Remove transitions to avoid visual lag/shift with overlays */
+    transition: none;
 }
 
 /* Hide scrollbars by default */
@@ -208,32 +208,58 @@
     transition: opacity var(--transition-fast);
 }
 
-.canvas-element-overlay.highlight {
-    background: var(--highlight-primary);
-    opacity: 0.3;
+/* Modern text selection - VS Code style */
+::selection {
+    background: var(--selection-bg);
+    color: var(--selection-text);
 }
 
-.canvas-element-overlay.selection {
-    background: var(--accent-blue);
-    opacity: 0.2;
-    border: 1px solid var(--accent-blue);
+::-moz-selection {
+    background: var(--selection-bg);
+    color: var(--selection-text);
 }
 
-/* Text selection highlighting on canvas */
-.text-highlight-overlay {
+/* Text input selection */
+.canvas-text-input::selection {
+    background: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+.canvas-text-input::-moz-selection {
+    background: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+/* Highlight matches - subtle background only */
+.highlight-match {
+    background: var(--highlight-match);
+    /* border-radius: 2px; */
+    padding: 0;
+}
+
+/* Unify new overlay highlight class */
+.mp-highlight-match {
+    background: var(--highlight-match);
+    /* border-radius: 2px; */
+    padding: 0;
+}
+
+/* Active (selected) text uses native ::selection with higher contrast */
+.highlight-match.active,
+.mp-highlight-match.active {
+    background: var(--highlight-match-active);
+    color: var(--selection-text);
+}
+
+/* Overlay element that mirrors textarea content for matches */
+.mp-text-highlight-overlay {
     position: absolute;
     pointer-events: none;
-    z-index: 999;
-    font-family: var(--font-family-mono);
-    font-size: var(--font-size-base);
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    color: transparent;
-    background: transparent;
-    border: transparent;
-    padding: var(--spacing-sm);
-    overflow: hidden;
+    z-index: var(--z-overlay);
+    transform: translateZ(0);
+    will-change: left, top;
+    mix-blend-mode: normal;
+    transition: none;
 }
 
 /* Canvas performance optimizations */

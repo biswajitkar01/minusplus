@@ -1,69 +1,87 @@
-// Text Highlighting and Matching System
-// Real-time text matching with visual highlighting
+// Clean Text Highlighting System - VS Code Style
+// Simple, performant highlighting with native browser selection
 
 class TextHighlighter {
     constructor() {
         this.activeHighlights = [];
-        this.originalSelection = null;
-        this.searchCache = new Map();
         this.debounceTimeout = null;
-
+        this.activeSelection = null; // track active input & selection range
         this.init();
     }
 
     init() {
-        console.log('Text highlighter initialized');
+        // Clean, simple initialization
     }
 
-    // Main method to highlight all matching text instances
+    // Main highlighting method - clean and simple
     highlightMatches(selectedText) {
-        // Clear existing highlights
         this.clearHighlights();
 
         if (!selectedText || selectedText.length < 2) {
+            this.activeSelection = null;
             return;
         }
 
-        // Debounce for performance
+        // Capture selection source so we can style it differently
+        const ae = document.activeElement;
+        if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')) {
+            const start = ae.selectionStart ?? 0;
+            const end = ae.selectionEnd ?? 0;
+            // Only record when text matches the selectedText (case-insensitive)
+            const sel = (ae.value || '').substring(start, end);
+            if (sel && sel.toLowerCase() === selectedText.toLowerCase()) {
+                this.activeSelection = { element: ae, start, end, text: sel };
+            } else {
+                this.activeSelection = null;
+            }
+        } else {
+            this.activeSelection = null;
+        }
+
         clearTimeout(this.debounceTimeout);
         this.debounceTimeout = setTimeout(() => {
-            this.performHighlighting(selectedText);
+            console.log('Highlighting:', selectedText);
+            this.performHighlighting(selectedText.trim());
         }, 50);
     }
 
     performHighlighting(searchText) {
-        const trimmedText = searchText.trim();
+        if (!searchText) return;
 
-        if (!trimmedText) {
-            return;
-        }
-
-        // Find all text elements that could contain matches
         const textElements = this.getTextElements();
+        console.log('Found elements:', textElements.length);
+        console.log('Searching for:', searchText);
 
-        textElements.forEach(element => {
-            this.highlightInElement(element, trimmedText);
+        textElements.forEach(elementData => {
+            console.log('Checking element text:', elementData.text, 'for:', searchText);
+            if (elementData.text.toLowerCase().includes(searchText.toLowerCase())) {
+                console.log('Match found! Highlighting in element:', elementData.element, 'text:', elementData.text);
+                this.highlightInElement(elementData, searchText);
+            } else {
+                console.log('No match in this element');
+            }
         });
     }
-
     getTextElements() {
         const elements = [];
 
-        // Get all text inputs
-        const inputs = document.querySelectorAll('.canvas-text-input');
-        inputs.forEach(input => elements.push({
-            element: input,
-            type: 'input',
-            text: input.value
-        }));
+        document.querySelectorAll('.canvas-text-input').forEach(input => {
+            console.log('Found input:', input, 'value:', input.value);
+            elements.push({
+                element: input,
+                type: 'input',
+                text: input.value
+            });
+        });
 
-        // Get all calculation results
-        const results = document.querySelectorAll('.calculation-result');
-        results.forEach(result => elements.push({
-            element: result,
-            type: 'result',
-            text: result.textContent
-        }));
+        document.querySelectorAll('.calculation-result, .inline-calculation-result').forEach(result => {
+            console.log('Found result:', result, 'text:', result.textContent);
+            elements.push({
+                element: result,
+                type: 'result',
+                text: result.textContent
+            });
+        });
 
         return elements;
     }
@@ -71,240 +89,191 @@ class TextHighlighter {
     highlightInElement(elementData, searchText) {
         const { element, type, text } = elementData;
 
-        if (!text || !text.includes(searchText)) {
-            return;
-        }
+        console.log('highlightInElement called for:', type, element);
 
-        if (type === 'input') {
-            this.highlightInInput(element, searchText);
-        } else if (type === 'result') {
-            this.highlightInText(element, searchText);
-        }
-    }
-
-    highlightInInput(input, searchText) {
-        const text = input.value;
-        const indices = this.findAllIndices(text, searchText);
-
-        if (indices.length === 0) {
-            return;
-        }
-
-        // Create highlight overlay for input
-        const overlay = this.createInputOverlay(input, searchText, indices);
-        if (overlay) {
-            this.activeHighlights.push({
-                element: input,
-                overlay: overlay,
-                type: 'input'
-            });
-        }
+        // Try to highlight in all elements - both input and result
+        console.log('Attempting to highlight in:', type, 'element');
+        this.highlightInText(element, searchText);
     }
 
     highlightInText(element, searchText) {
-        const originalText = element.textContent;
-        const indices = this.findAllIndices(originalText, searchText);
+        const originalText = element.textContent || element.value || '';
 
-        if (indices.length === 0) {
-            return;
-        }
+        // For textarea/input elements, render a highlight overlay that mirrors text
+        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+            console.log('Creating precise overlay for input element');
+            this.createInputOverlay(element, searchText, originalText);
+        } else {
+            // For other elements, use HTML highlighting with lower-contrast matches
+            const regex = new RegExp(`(${this.escapeRegex(searchText)})`, 'gi');
+            const highlightedHTML = this.escapeHTML(originalText).replace(
+                regex,
+                '<span class="mp-highlight-match">$1</span>'
+            );
+            console.log('Original:', originalText, 'Highlighted:', highlightedHTML);
 
-        // Create highlighted HTML
-        const highlightedHTML = this.createHighlightedHTML(originalText, searchText, indices);
-
-        // Store original content
-        const highlight = {
-            element: element,
-            originalHTML: element.innerHTML,
-            originalText: originalText,
-            type: 'text'
-        };
-
-        // Apply highlighted HTML
-        element.innerHTML = highlightedHTML;
-
-        this.activeHighlights.push(highlight);
-    }
-
-    createInputOverlay(input, searchText, indices) {
-        try {
-            const overlay = document.createElement('div');
-            overlay.className = 'text-highlight-overlay';
-            overlay.style.position = 'absolute';
-            overlay.style.pointerEvents = 'none';
-            overlay.style.zIndex = '999';
-
-            // Match input styling
-            const inputStyle = window.getComputedStyle(input);
-            overlay.style.font = inputStyle.font;
-            overlay.style.padding = inputStyle.padding;
-            overlay.style.border = 'transparent';
-            overlay.style.backgroundColor = 'transparent';
-            overlay.style.color = 'transparent';
-
-            // Position overlay
-            const rect = input.getBoundingClientRect();
-            overlay.style.left = rect.left + 'px';
-            overlay.style.top = rect.top + 'px';
-            overlay.style.width = rect.width + 'px';
-            overlay.style.height = rect.height + 'px';
-
-            // Create highlighted content
-            const text = input.value;
-            let highlightedText = '';
-            let lastIndex = 0;
-
-            indices.forEach(index => {
-                highlightedText += text.substring(lastIndex, index);
-                highlightedText += `<span class="highlight-match">${searchText}</span>`;
-                lastIndex = index + searchText.length;
+            // Store for cleanup
+            this.activeHighlights.push({
+                element: element,
+                originalHTML: element.innerHTML,
+                type: 'text'
             });
-            highlightedText += text.substring(lastIndex);
 
-            overlay.innerHTML = highlightedText;
-            document.body.appendChild(overlay);
-
-            return overlay;
-        } catch (error) {
-            console.warn('Failed to create input overlay:', error);
-            return null;
+            element.innerHTML = highlightedHTML;
+            console.log('Applied HTML to element:', element);
         }
     }
 
-    createHighlightedHTML(text, searchText, indices) {
-        let result = '';
-        let lastIndex = 0;
-
-        indices.forEach(index => {
-            // Add text before match
-            result += this.escapeHTML(text.substring(lastIndex, index));
-            // Add highlighted match
-            result += `<span class="highlight-match">${this.escapeHTML(searchText)}</span>`;
-            lastIndex = index + searchText.length;
+    createInputOverlay(input, searchText, originalText) {
+        // Remove any previous overlay for this input (safety)
+        this.activeHighlights = this.activeHighlights.filter(h => {
+            if (h.type === 'input-overlay' && h.element === input && h.overlay && h.overlay.parentNode) {
+                h.overlay.parentNode.removeChild(h.overlay);
+                return false;
+            }
+            return true;
         });
 
-        // Add remaining text
-        result += this.escapeHTML(text.substring(lastIndex));
+        // Build highlighted content by mirroring the input's text.
+        // IMPORTANT: Do not cover the currently selected portion in the active input,
+        // so native ::selection shows with higher contrast.
+        const html = this.buildOverlayHTML(input, originalText, searchText);
 
-        return result;
+        // Create overlay element
+        const overlay = document.createElement('div');
+        overlay.className = 'mp-text-highlight-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '999';
+        overlay.style.color = 'transparent'; // show only backgrounds in spans
+        overlay.style.background = 'transparent';
+        overlay.style.whiteSpace = 'pre-wrap';
+        overlay.style.overflow = 'hidden';
+        overlay.style.transition = 'none';
+
+        // Copy typography and box model from the input exactly
+        const cs = window.getComputedStyle(input);
+        overlay.style.font = cs.font; // copies font-size, family, weight, etc.
+        overlay.style.lineHeight = cs.lineHeight;
+        overlay.style.letterSpacing = cs.letterSpacing;
+        overlay.style.wordSpacing = cs.wordSpacing;
+        overlay.style.textIndent = cs.textIndent;
+        overlay.style.whiteSpace = cs.whiteSpace || 'pre-wrap';
+
+        // Copy padding and borders exactly as they are
+        overlay.style.padding = cs.padding;
+        overlay.style.border = cs.border;
+        overlay.style.borderRadius = cs.borderRadius;
+        overlay.style.boxSizing = cs.boxSizing;
+
+        // Copy text alignment to ensure proper positioning
+        overlay.style.textAlign = cs.textAlign;
+        overlay.style.verticalAlign = cs.verticalAlign;
+
+        // Position overlay to match the input exactly
+        const rect = input.getBoundingClientRect();
+        overlay.style.left = (rect.left + window.scrollX) + 'px';
+        overlay.style.top = (rect.top + window.scrollY) + 'px';
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+
+        // Ensure overlay border is transparent so it doesn't interfere with positioning
+        overlay.style.borderColor = 'transparent';
+
+        // Insert the content
+        overlay.innerHTML = html;
+
+        // Append to body
+        document.body.appendChild(overlay);
+
+        // Track for cleanup/reposition
+        this.activeHighlights.push({ element: input, overlay, type: 'input-overlay' });
+
+        console.log('Created precise overlay for input');
     }
 
-    findAllIndices(text, searchText) {
-        const indices = [];
-        const searchLower = searchText.toLowerCase();
-        const textLower = text.toLowerCase();
+    // Build overlay HTML with matches. Skip the active selection range for the active element
+    // so that the native selection remains visible (higher contrast).
+    buildOverlayHTML(input, text, searchText) {
+        const lowerText = (text || '').toLowerCase();
+        const q = (searchText || '').toLowerCase();
+        if (!q) return this.escapeHTML(text || '');
 
-        let index = textLower.indexOf(searchLower);
-        while (index !== -1) {
-            indices.push(index);
-            index = textLower.indexOf(searchLower, index + 1);
+        const isActive = this.activeSelection && this.activeSelection.element === input;
+        const selStart = isActive ? this.activeSelection.start : -1;
+        const selEnd = isActive ? this.activeSelection.end : -1;
+
+        let i = 0;
+        let html = '';
+        const qLen = q.length;
+        while (i < lowerText.length) {
+            const idx = lowerText.indexOf(q, i);
+            if (idx === -1) {
+                html += this.escapeHTML(text.slice(i));
+                break;
+            }
+            // preceding text
+            if (idx > i) html += this.escapeHTML(text.slice(i, idx));
+
+            const matchEnd = idx + qLen;
+            const isSelectedRange = isActive && idx === selStart && matchEnd === selEnd;
+
+            const segment = this.escapeHTML(text.slice(idx, matchEnd));
+            if (isSelectedRange) {
+                // Do not wrap selected range so native ::selection shows through
+                html += segment;
+            } else {
+                html += `<span class="mp-highlight-match">${segment}</span>`;
+            }
+            i = matchEnd;
         }
+        return html;
+    }
 
-        return indices;
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Escape HTML to safely inject text content into overlay/result HTML
+    escapeHTML(str) {
+        return (str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     clearHighlights() {
         this.activeHighlights.forEach(highlight => {
             try {
-                if (highlight.type === 'input' && highlight.overlay) {
-                    // Remove input overlay
-                    if (highlight.overlay.parentNode) {
-                        highlight.overlay.parentNode.removeChild(highlight.overlay);
-                    }
-                } else if (highlight.type === 'text') {
-                    // Restore original content
+                if (highlight.type === 'text') {
                     highlight.element.innerHTML = highlight.originalHTML;
+                } else if ((highlight.type === 'input-overlay' || highlight.type === 'overlay') && highlight.overlay) {
+                    if (highlight.overlay.parentNode) highlight.overlay.parentNode.removeChild(highlight.overlay);
+                } else if (highlight.type === 'border') {
+                    highlight.element.style.border = highlight.originalBorder || '';
                 }
             } catch (error) {
                 console.warn('Error clearing highlight:', error);
             }
         });
-
         this.activeHighlights = [];
     }
 
-    // Numeric highlighting - highlight all instances of a number value
-    highlightNumericValue(value) {
-        const textElements = this.getTextElements();
-
-        textElements.forEach(elementData => {
-            const numbers = this.extractNumbers(elementData.text);
-            if (numbers.includes(value)) {
-                this.highlightInElement(elementData, value.toString());
-            }
-        });
-    }
-
-    extractNumbers(text) {
-        const matches = text.match(/[-+]?\d*\.?\d+/g);
-        return matches ? matches.map(match => parseFloat(match)) : [];
-    }
-
-    // Context-aware highlighting
-    highlightCalculationContext(calculation) {
-        if (!calculation) return;
-
-        const { numbers, result } = calculation;
-
-        // Highlight all numbers involved in calculation
-        numbers.forEach(num => {
-            this.highlightNumericValue(num);
-        });
-
-        // Highlight result with different style
-        this.highlightNumericValue(result, 'result');
-    }
-
-    // Performance optimization: viewport-based highlighting
-    highlightInViewport() {
-        const viewportElements = this.getVisibleTextElements();
-        // Only highlight elements currently visible
-        // This could be implemented for very large canvases
-    }
-
-    getVisibleTextElements() {
-        // Get elements within current viewport
-        // Implementation would depend on canvas system
-        return this.getTextElements();
-    }
-
-    // Utility methods
-    escapeHTML(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Smart highlighting based on content type
-    getHighlightType(text) {
-        // Determine if text is a number, calculation, or regular text
-        if (/^[-+]?\d*\.?\d+$/.test(text.trim())) {
-            return 'number';
-        }
-
-        if (text.includes('=')) {
-            return 'result';
-        }
-
-        if (/\d+.*\d+/.test(text)) {
-            return 'calculation';
-        }
-
-        return 'text';
-    }
-
-    // Update highlights when canvas transforms
     updateHighlightPositions() {
-        this.activeHighlights.forEach(highlight => {
-            if (highlight.type === 'input' && highlight.overlay) {
-                const rect = highlight.element.getBoundingClientRect();
-                highlight.overlay.style.left = rect.left + 'px';
-                highlight.overlay.style.top = rect.top + 'px';
+        // Reposition any active input overlays (e.g., after scroll/zoom)
+        this.activeHighlights.forEach(h => {
+            if ((h.type === 'input-overlay' || h.type === 'overlay') && h.overlay && h.element) {
+                const rect = h.element.getBoundingClientRect();
+                h.overlay.style.left = (rect.left + window.scrollX) + 'px';
+                h.overlay.style.top = (rect.top + window.scrollY) + 'px';
+                h.overlay.style.width = rect.width + 'px';
+                h.overlay.style.height = rect.height + 'px';
             }
         });
     }
 
-    // Cleanup
     destroy() {
         clearTimeout(this.debounceTimeout);
         this.clearHighlights();

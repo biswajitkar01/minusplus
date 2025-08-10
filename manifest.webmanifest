@@ -1,0 +1,26 @@
+{
+    "name": "MinusPlus",
+    "short_name": "MinusPlus",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a1a",
+    "theme_color": "#1a1a1a",
+    "icons": [
+        {
+            "src": "src/assets/favicon-16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "src/assets/favicon-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "src/assets/favicon.svg",
+            "sizes": "64x64",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}
