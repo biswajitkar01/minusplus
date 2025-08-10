@@ -259,30 +259,47 @@ class MinusPlusApp {
         });
 
         // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
+        const onKeyDown = (e) => {
+            // Reset view: Ctrl+0 only (support main row and numpad 0).
+            // On macOS, use Control+0; Command+0 is left to the browser's default zoom reset.
+            if (e.ctrlKey && (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                this.canvas.resetView();
+                this.textManager.onCanvasTransform?.();
+                this.highlighter.updateHighlightPositions?.();
+                return false;
+            }
+
+            // Allow Cmd+0 to pass through on macOS
+            if (e.metaKey && (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0')) {
+                return; // Do not block browser default
+            }
+
             if (e.ctrlKey || e.metaKey) {
                 switch (e.key) {
-                    case '0':
-                        e.preventDefault();
-                        this.canvas.resetView();
-                        // Update text element positions after canvas reset
-                        this.textManager.onCanvasTransform();
-                        break;
                     case 's':
                         e.preventDefault();
+                        e.stopPropagation();
                         this.saveState();
-                        break;
+                        return false;
                 }
             }
 
             if (e.key === 'Escape') {
                 this.textManager.clearActiveInput();
             }
-        });
+        };
+        // Capture phase so Ctrl+0 is handled early; Cmd+0 is allowed to pass through on macOS
+        document.addEventListener('keydown', onKeyDown, true);
+        window.addEventListener('keydown', onKeyDown, true);
 
         // Window resize
         window.addEventListener('resize', this.debounce(() => {
             this.canvas.handleResize();
+            this.textManager.onCanvasTransform?.();
+            this.highlighter.updateHighlightPositions?.();
         }, 150));
 
         // Cleanup on page unload
