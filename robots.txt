@@ -1,0 +1,9 @@
+# robots.txt for MinusPlus
+User-agent: *
+Allow: /
+
+# Canonical host
+Host: https://minusplus.app
+
+# Sitemap
+Sitemap: https://minusplus.app/sitemap.xml
