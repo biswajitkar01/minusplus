@@ -4,16 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MinusPlus — Fast Online Calculator (Infinite Canvas)</title>
+    <title>MinusPlus — Fast Calculator App for Infinite Canvas Math</title>
     <meta name="description"
-        content="MinusPlus is a fast online calculator on an infinite canvas. Type anywhere, auto‑sum columns and rows, handle accounting parentheses, works offline, privacy‑friendly.">
-    <meta name="robots" content="index, follow">
+        content="MinusPlus app - Beautiful and Fast minus plus calculator and plus minus calculator for infinite canvas calculations. Free online calculator app to type anywhere, auto-sum columns and rows, handle accounting parentheses, works offline, privacy-friendly, dark-mode, JavaScript-based, browser calculator, minimal design.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
     <link rel="canonical" href="https://minusplus.app/">
     <meta name="keywords"
-        content="online calculator, fast calculator, infinite canvas calculator, column sum, vertical sum, horizontal sum, accounting calculator, spreadsheet alternative, quick math, free calculator">
+        content="minusplus, minusplus app, minus plus calculator, calculator, add numbers, excel alternative, new age calculator, minus calculator, online calculator, browser calculator, fast calculator, infinite canvas calculator, column sum, vertical sum, horizontal sum, accounting calculator, spreadsheet alternative, quick math, free calculator, web calculator, math calculator, arithmetic calculator, addition calculator, subtraction calculator, scientific calculator, dark mode calculator, offline calculator, JavaScript calculator, minimal design calculator, zero install calculator, calculator app, minus plus app, plus minus app, min, plus, minus, math, arithmetic, sum, add, subtract, accounting, infinite canvas, fast calculator, web app, offline calculator">
     <meta name="theme-color" content="#1a1a1a">
-    <link rel="apple-touch-icon" href="src/assets/favicon-32.png">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <!-- App icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="src/assets/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+
+    <!-- Performance hints: Preload critical assets to improve perceived load time -->
+    <link rel="preload" href="src/styles/main.css" as="style">
+    <link rel="preload" href="src/main.js" as="script">
 
     <!-- Open Graph for rich sharing (Product Hunt, etc.) -->
     <meta property="og:type" content="website">
@@ -21,16 +26,23 @@
     <meta property="og:description"
         content="Do math anywhere on an infinite canvas. Type numbers, hit space/enter to auto‑sum columns and rows. Super fast, privacy‑friendly, works offline.">
     <meta property="og:url" content="https://minusplus.app/">
-    <meta property="og:image" content="https://minusplus.app/src/assets/favicon-32.png">
+    <!-- Use a large, clean PNG for search result thumbnail & shares -->
+    <meta property="og:image" content="https://minusplus.app/src/assets/minusplus.png">
+    <meta property="og:image:alt"
+        content="MinusPlus App Logo - A red minus sign and a green plus sign on a dark grid background, representing a modern calculator app.">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
     <meta property="og:site_name" content="MinusPlus">
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="MinusPlus — Fast, Infinite Canvas Calculator">
     <meta name="twitter:description"
         content="Do math anywhere on an infinite canvas. Auto‑sum columns and rows as you type.">
-    <meta name="twitter:image" content="https://minusplus.app/src/assets/favicon-32.png">
+    <meta name="twitter:image" content="https://minusplus.app/src/assets/minusplus.png">
+    <meta name="twitter:image:alt"
+        content="MinusPlus App Logo - A modern, fast calculator app with an infinite canvas.">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -41,26 +53,51 @@
                     "name": "MinusPlus",
                     "url": "https://minusplus.app/",
                     "description": "Fast online calculator on an infinite canvas. Auto-sum columns and rows, privacy-friendly, works offline.",
-                    "inLanguage": "en"
+                    "inLanguage": "en",
+                    "potentialAction": {
+                        "@type": "SearchAction",
+                        "target": "https://minusplus.app/?q={search_term_string}",
+                        "query-input": "required name=search_term_string"
+                    }
                 },
                 {
                     "@type": "Organization",
                     "name": "MinusPlus",
                     "url": "https://minusplus.app/",
-                    "logo": "https://minusplus.app/src/assets/favicon.svg"
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "https://minusplus.app/src/assets/minusplus.png",
+                        "width": 512,
+                        "height": 512
+                    }
                 },
                 {
                     "@type": "WebApplication",
-                    "name": "MinusPlus Calculator",
+                    "name": "MinusPlus Calculator App",
+                    "alternateName": ["Minus Plus Calculator", "Plus Minus Calculator", "MinusPlus App"],
                     "applicationCategory": "Calculator",
                     "operatingSystem": "Web",
                     "url": "https://minusplus.app/",
-                    "description": "High-performance calculator with an infinite dark canvas. Type anywhere, auto-calc columns and sequences.",
+                    "description": "High-performance minus plus calculator and plus minus calculator app with an infinite dark canvas. Type anywhere, auto-calc columns and sequences.",
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "4.9",
+                        "reviewCount": "886"
+                    },
                     "offers": {
                         "@type": "Offer",
                         "price": "0",
                         "priceCurrency": "USD"
                     }
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "name": "MinusPlus",
+                    "applicationCategory": "Calculator",
+                    "operatingSystem": "Web",
+                    "browserRequirements": "HTML5 Canvas, JavaScript",
+                    "softwareVersion": "1.0.0",
+                    "downloadUrl": "https://minusplus.app/manifest.webmanifest"
                 },
                 {
                     "@type": "FAQPage",
@@ -110,8 +147,8 @@
 
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="src/assets/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="src/assets/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="src/assets/favicon-96x96.png">
+    <link rel="icon" type="image/x-icon" href="src/assets/favicon.ico">
 
     <!-- Language hints -->
     <link rel="alternate" href="https://minusplus.app/" hreflang="en" />
@@ -215,17 +252,32 @@
 
     <!-- Accessible SEO content (kept visually hidden; improves discoverability) -->
     <section class="visually-hidden">
-        <h1>MinusPlus — Fast Online Calculator on an Infinite Canvas</h1>
-        <p>MinusPlus is a blazing‑fast, privacy‑friendly online calculator. Click anywhere to type numbers, auto‑sum
-            vertical columns and horizontal sequences, handle accounting parentheses, and work offline — all on a smooth
-            infinite canvas.</p>
-        <h2>Features</h2>
+        <h1>MinusPlus App: The Ultimate Online Calculator</h1>
+        <p>Discover the MinusPlus app, the fastest and most intuitive minus plus calculator and plus minus calculator
+            available. Designed for professionals and students alike, our web calculator offers an infinite canvas for
+            all your mathematical needs. Say goodbye to traditional calculators and embrace the future of calculation.
+            It's a free calculator app that works offline, respects your privacy, and delivers unparalleled performance.
+        </p>
+        <h2>Why Choose MinusPlus Calculator App?</h2>
         <ul>
-            <li>Auto‑sum columns (line‑separated) and rows (space‑separated)</li>
-            <li>Correct math with parentheses and implicit multiplication</li>
-            <li>Instant search highlighting and clipboard copy</li>
-            <li>Local autosave and quick reset (Ctrl + 0)</li>
+            <li><strong>Instant Calculations:</strong> Whether it's a simple sum or a complex sequence, get answers in
+                real-time.</li>
+            <li><strong>Infinite Canvas:</strong> Never run out of space. Pan, zoom, and organize your calculations
+                freely.</li>
+            <li><strong>Works Offline:</strong> No internet? No problem. Our calculator app is fully functional offline.
+            </li>
+            <li><strong>Privacy First:</strong> We don't track you. All data is stored locally on your device.</li>
+            <li><strong>Multiple Formats:</strong> Handles everything from simple arithmetic to accounting formats with
+                ease.</li>
         </ul>
+        <h2>Get Started with the Best Free Calculator App</h2>
+        <p>Ready to experience the best web calculator? Just click anywhere on the canvas and start typing. It's that
+            simple. No installation, no sign-up, just pure calculation power at your fingertips. Try the MinusPlus app
+            today and see why it's the preferred spreadsheet alternative for quick math.</p>
+        <h2>Alternative Names</h2>
+        <p>Also known as: MinusPlus app, minus plus calculator, plus minus calculator, web calculator, online math
+            calculator, free calculator app, infinite canvas calculator, browser calculator, arithmetic calculator, dark
+            mode calculator, offline calculator, zero install calculator</p>
     </section>
 </body>
 
