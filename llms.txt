@@ -1,0 +1,60 @@
+# MinusPlus
+
+> A fast, privacy-friendly online calculator app with an infinite canvas interface. Type anywhere to calculate, auto-sum columns and rows, works offline.
+
+MinusPlus is a high-performance web calculator that revolutionizes how people do math online. Built with vanilla JavaScript and HTML5 Canvas, it offers an infinite dark canvas where users can click anywhere to start calculating. The app automatically detects and sums vertical columns and horizontal sequences, handles accounting formats, and works completely offline while respecting user privacy.
+
+## Key Features
+
+- **Infinite Canvas Calculator**: Click anywhere on an unlimited workspace to start calculating
+- **Auto-Sum Intelligence**: Automatically detects and calculates vertical columns (line-separated) and horizontal sequences (space-separated)
+- **Privacy-First**: All data stored locally, no tracking, no external dependencies
+- **Offline Capable**: Full functionality without internet connection
+- **Accounting Formats**: Supports parentheses for negatives, trailing minus signs, currency symbols
+- **High Performance**: 60fps canvas operations, <200ms load time
+- **Progressive Web App**: Installable on mobile devices, works like a native app
+
+## Technical Specifications
+
+- **Technology Stack**: Vanilla JavaScript, HTML5 Canvas, Pure CSS
+- **Performance**: Sub-200ms load time, 60fps canvas operations
+- **Browser Support**: Chrome 80+, Firefox 76+, Safari 13.1+, Edge 80+
+- **Mobile**: Touch-optimized with PWA capabilities
+- **Architecture**: Modular design with clean separation of concerns
+
+## Use Cases
+
+MinusPlus is perfect for:
+- **Professionals**: Quick calculations during meetings, financial analysis
+- **Students**: Math homework, note-taking with calculations
+- **Accountants**: Column additions, accounting format support
+- **Anyone**: Who needs a fast, reliable calculator without the limitations of traditional calculators
+
+## Getting Started
+
+1. Visit https://minusplus.app
+2. Click anywhere on the dark canvas
+3. Start typing numbers
+4. Use spaces for horizontal addition, new lines for vertical columns
+5. Press Escape to delete a calculation box
+6. Use Ctrl+0 to reset the view
+
+## Alternative Names
+
+MinusPlus is also known as: minus plus calculator, plus minus calculator, infinite canvas calculator, web calculator, online calculator, browser calculator, fast calculator, offline calculator, dark mode calculator, accounting calculator.
+
+## Privacy & Security
+
+- No user tracking or analytics beyond basic Google Analytics
+- All calculations stored locally in browser
+- No external API calls for calculations
+- No user accounts or data collection
+- Open source approach to transparency
+
+## Performance Features
+
+- Object pooling for memory efficiency
+- Viewport culling for large datasets
+- Hardware acceleration for smooth animations
+- Debounced input handling
+- Progressive enhancement with graceful fallbacks
