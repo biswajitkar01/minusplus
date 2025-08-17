@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MinusPlus - Beautiful, Fast and Truly Infinite Calculator</title>
     <meta name="description"
-        content="MinusPlus app - Beautiful and Fast minus plus calculator and plus minus calculator for infinite canvas calculations. Free online calculator app to type anywhere, auto-sum columns and rows, handle accounting parentheses, works offline, privacy-friendly, dark-mode, JavaScript-based, browser calculator, minimal design.">
+        content="MinusPlus is a fast online calculator on an infinite canvas. Type anywhere, auto‑sum rows and columns, works offline, privacy‑friendly. Free and zero‑install.">
     <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <link rel="canonical" href="https://minusplus.app/">
     <meta name="keywords"
         content="minusplus, minusplus app, minus plus calculator, calculator, add numbers, excel alternative, new age calculator, minus calculator, online calculator, browser calculator, fast calculator, infinite canvas calculator, column sum, vertical sum, horizontal sum, accounting calculator, spreadsheet alternative, quick math, free calculator, web calculator, math calculator, arithmetic calculator, addition calculator, subtraction calculator, scientific calculator, dark mode calculator, offline calculator, JavaScript calculator, minimal design calculator, zero install calculator, calculator app, minus plus app, plus minus app, min, plus, minus, math, arithmetic, sum, add, subtract, accounting, infinite canvas, fast calculator, web app, offline calculator">
     <meta name="theme-color" content="#1a1a1a">
+    <meta name="application-name" content="MinusPlus">
+    <meta name="apple-mobile-web-app-title" content="MinusPlus">
     <!-- App icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="src/assets/apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
@@ -59,6 +62,19 @@
                         "target": "https://minusplus.app/?q={search_term_string}",
                         "query-input": "required name=search_term_string"
                     }
+                },
+                {
+                    "@type": "WebPage",
+                    "url": "https://minusplus.app/",
+                    "name": "MinusPlus — Fast, Beautiful, Truly Infinite Calculator",
+                    "description": "MinusPlus is a fast online calculator on an infinite canvas. Type anywhere, auto‑sum rows and columns, works offline.",
+                    "primaryImageOfPage": {
+                        "@type": "ImageObject",
+                        "url": "https://minusplus.app/src/assets/minusplus.png",
+                        "width": 512,
+                        "height": 512
+                    },
+                    "image": ["https://minusplus.app/src/assets/minusplus.png"]
                 },
                 {
                     "@type": "Organization",
@@ -148,6 +164,8 @@
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
     <link rel="icon" type="image/png" sizes="96x96" href="src/assets/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="src/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="src/assets/favicon-16x16.png">
     <link rel="icon" type="image/x-icon" href="src/assets/favicon.ico">
 
     <!-- Language hints -->
@@ -251,7 +269,7 @@
     <script type="module" src="src/main.js"></script>
 
     <!-- Accessible SEO content (kept visually hidden; improves discoverability) -->
-    <section class="visually-hidden">
+    <section class="visually-hidden" data-nosnippet>
         <h1>MinusPlus App: The Ultimate Online Calculator</h1>
         <p>Discover the MinusPlus app, the fastest and most intuitive minus plus calculator and plus minus calculator
             available. Designed for professionals and students alike, our web calculator offers an infinite canvas for
