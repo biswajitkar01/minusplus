@@ -361,6 +361,39 @@ body {
     flex: 1;
 }
 
+/* Shortcuts popup actions */
+.popup-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.popup-link {
+    pointer-events: auto;
+    /* ensure clickable within overlay */
+    color: var(--accent-green);
+    /* text green */
+    text-decoration: none;
+    border: 1px solid var(--accent-red);
+    /* border red */
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: var(--font-size-sm);
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.popup-link:hover {
+    background: rgba(255, 68, 68, 0.12);
+    /* subtle red tint */
+    color: var(--accent-green);
+    border-color: var(--accent-red);
+}
+
+.popup-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.35);
+}
+
 /* Text input styles */
 .canvas-text-input {
     background: transparent;
