@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About MinusPlus Calculator App — Infinite Canvas Math Tool</title>
+    <meta name="description"
+        content="Learn about MinusPlus Calculator App, the world's first infinite canvas calculator. Discover our mission, features, and why we're different from other MinusPlus businesses." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://minusplus.app/about" />
+    <meta name="keywords"
+        content="about minusplus, minusplus calculator app, infinite canvas calculator, calculator app story, minusplus features, online calculator" />
+
+    <!-- App icons / Manifest -->
+    <link rel="apple-touch-icon" sizes="180x180" href="src/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="src/assets/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="src/assets/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="src/assets/favicon-16x16.png" />
+    <link rel="icon" type="image/x-icon" href="src/assets/favicon.ico" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="About MinusPlus Calculator App" />
+    <meta property="og:description" content="Learn about the world's first infinite canvas calculator app." />
+    <meta property="og:url" content="https://minusplus.app/about" />
+    <meta property="og:image" content="https://minusplus.app/src/assets/minusplus.png" />
+    <meta property="og:site_name" content="MinusPlus" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            "url": "https://minusplus.app/about",
+            "name": "About MinusPlus Calculator App",
+            "description": "Learn about MinusPlus Calculator App, the world's first infinite canvas calculator.",
+            "mainEntity": {
+                "@type": "SoftwareApplication",
+                "name": "MinusPlus Calculator App",
+                "applicationCategory": "UtilitiesApplication",
+                "operatingSystem": "Web Browser",
+                "url": "https://minusplus.app",
+                "description": "The world's first infinite canvas calculator app for mathematical calculations"
+            }
+        }
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/styles/main.css" />
+    <link rel="stylesheet" href="src/styles/about.css" />
+</head>
+
+<body>
+    <!-- Animated background (honors reduced motion) -->
+    <canvas id="about-canvas" aria-hidden="true"></canvas>
+
+    <main class="about-container">
+        <header class="about-hero">
+            <h1>
+                <span class="brand">About MinusPlus</span>
+                <span class="mark-minus">−</span>
+                <span class="mark-plus">+</span>
+            </h1>
+            <p class="subtitle">The world's first infinite canvas calculator — minimal, fast, offline, private.</p>
+            <div class="hero-ctas">
+                <a class="btn btn-primary" href="/">Open Calculator</a>
+            </div>
+        </header>
+
+        <section class="card two-col">
+            <div>
+                <h2>Our Mission</h2>
+                <p>
+                    <strong>MinusPlus Calculator App</strong> is the world's first infinite canvas calculator. No
+                    clutter. No ads.
+                    No tracking. Just numbers, space, and speed.
+                </p>
+                <ul class="feature-list">
+                    <li><strong>Infinite Canvas:</strong> Space to think and calculate.</li>
+                    <li><strong>Auto‑Sum:</strong> Columns and rows calculated as you type.</li>
+                    <li><strong>Offline:</strong> Works after first load, even on flights.</li>
+                    <li><strong>Privacy‑first:</strong> Data never leaves your browser.</li>
+                </ul>
+            </div>
+            <div class="stats">
+                <div class="pill"><span class="minus">−</span> 60fps canvas</div>
+                <div class="pill"><span class="plus">+</span> &lt;200ms load</div>
+                <div class="pill"><span class="plus">+</span> Zero install</div>
+                <div class="pill"><span class="minus">−</span> No tracking</div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>What Makes Us Different</h2>
+            <div class="grid-features">
+                <div class="feature">
+                    <div class="glyph minus">−</div>
+                    <h3>Minimal to the core</h3>
+                    <p>No distractions. Click anywhere, type, done.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">+</div>
+                    <h3>Made for flow</h3>
+                    <p>Auto‑sums, SAP minus, accounting parentheses, currencies.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">+</div>
+                    <h3>Canvas, not cells</h3>
+                    <p>Arrange calculations spatially. Zoom, pan, think visually.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph minus">−</div>
+                    <h3>Private by design</h3>
+                    <p>Everything stays local. No accounts. Works offline.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="about-footer">
+            <a class="btn btn-ghost" href="/">← Back to Calculator</a>
+        </footer>
+    </main>
+
+    <script type="module" src="src/about.js"></script>
+</body>
+
+</html>
