@@ -147,7 +147,9 @@ class TextManager {
         }
 
         if (calculation) {
-            if (calculation.type === 'mixed') {
+            if (calculation.type === 'timezone') {
+                this.displayTimezoneResults(element, calculation);
+            } else if (calculation.type === 'mixed') {
                 this.displayMixedResults(element, calculation);
             } else if (calculation.numbers && calculation.numbers.length > 1) {
                 this.displayResult(element, calculation);
@@ -262,12 +264,75 @@ class TextManager {
         }
     }
 
+    displayTimezoneResults(element, calculation) {
+        // Clear any existing timezone results
+        this.clearTimezoneResults(element);
+
+        const timezones = calculation.timezones;
+        if (!timezones || timezones.length === 0) return;
+
+        // Create container for all timezone results
+        if (!element.timezoneResults) {
+            element.timezoneResults = [];
+        }
+
+        const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
+        const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
+        let currentY = screenPos.y + inputHeight + 5;
+
+        // Create a result box for each timezone
+        timezones.forEach((tz, index) => {
+            const resultBox = document.createElement('div');
+            resultBox.className = 'calculation-result timezone-result';
+
+            // Add night-time styling if applicable
+            if (tz.isNight) {
+                resultBox.classList.add('timezone-night');
+            }
+
+            // Add local indicator styling
+            if (tz.isLocal) {
+                resultBox.classList.add('timezone-local');
+            }
+
+            resultBox.textContent = `${tz.label}: ${tz.time}`;
+            resultBox.style.position = 'absolute';
+            resultBox.style.zIndex = '1001';
+            resultBox.style.left = screenPos.x + 'px';
+            resultBox.style.top = currentY + 'px';
+
+            document.body.appendChild(resultBox);
+            element.timezoneResults.push(resultBox);
+
+            // Move down for next timezone (result box height + small gap)
+            currentY += 35;
+        });
+
+        // Also hide the regular result element if it exists
+        if (element.resultElement) {
+            element.resultElement.style.display = 'none';
+        }
+    }
+
+    clearTimezoneResults(element) {
+        if (element.timezoneResults) {
+            element.timezoneResults.forEach(result => {
+                if (result.parentNode) {
+                    result.parentNode.removeChild(result);
+                }
+            });
+            element.timezoneResults = [];
+        }
+    }
+
     hideResult(element) {
         if (element.resultElement) {
             element.resultElement.style.display = 'none';
         }
         // Also clear inline results when hiding
         this.clearInlineResults(element);
+        // Also clear timezone results when hiding
+        this.clearTimezoneResults(element);
     }
 
     autoResize(textarea) {
@@ -399,6 +464,25 @@ class TextManager {
         if (element.inlineResults && element.inlineResults.length > 0) {
             this.updateInlineResultPositions(element);
         }
+
+        // Update timezone result positions
+        if (element.timezoneResults && element.timezoneResults.length > 0) {
+            this.updateTimezoneResultPositions(element);
+        }
+    }
+
+    updateTimezoneResultPositions(element) {
+        if (!element.timezoneResults) return;
+
+        const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
+        const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
+        let currentY = screenPos.y + inputHeight + 5;
+
+        element.timezoneResults.forEach((resultBox) => {
+            resultBox.style.left = screenPos.x + 'px';
+            resultBox.style.top = currentY + 'px';
+            currentY += 35; // Height of each timezone result box
+        });
     }
 
     updateInlineResultPositions(element) {
@@ -421,6 +505,9 @@ class TextManager {
 
         // Clean up inline results
         this.clearInlineResults(element);
+
+        // Clean up timezone results
+        this.clearTimezoneResults(element);
 
         // Remove from DOM
         if (element.input.parentNode) {
