@@ -29,9 +29,11 @@ class CalculationEngine {
 
         const cleanText = text.trim();
 
-        // Check for timezone conversion keyword
-        if (cleanText.toLowerCase() === 'time') {
-            return this.convertTimezones();
+        // Check for timezone conversion keyword with optional offset
+        const timeMatch = cleanText.toLowerCase().match(/^time\s*([-+]\s*\d+)?$/);
+        if (timeMatch) {
+            const offsetHours = timeMatch[1] ? parseFloat(timeMatch[1].replace(/\s/g, '')) : 0;
+            return this.convertTimezones(offsetHours);
         }
 
         // Detect calculation type - prioritize mixed calculations
@@ -701,8 +703,11 @@ class CalculationEngine {
     }
 
     // Timezone conversion feature
-    convertTimezones() {
+    convertTimezones(hourOffset = 0) {
         const now = new Date();
+
+        // Apply hour offset if provided (for "time + 2" or "time - 3")
+        const adjustedTime = new Date(now.getTime() + (hourOffset * 3600000));
 
         // Define all timezones with their UTC offsets
         const allTimezones = [
@@ -732,19 +737,20 @@ class CalculationEngine {
         const timezones = [];
 
         // Add local timezone first
-        const localTime = this.formatTimeForZone(now, localOffset, localZone.label, true);
+        const localTime = this.formatTimeForZone(adjustedTime, localOffset, localZone.label, true);
         timezones.push(localTime);
 
         // Add other 5 timezones
         otherZones.forEach(tz => {
-            const zoneTime = this.formatTimeForZone(now, tz.offset, tz.label, false);
+            const zoneTime = this.formatTimeForZone(adjustedTime, tz.offset, tz.label, false);
             timezones.push(zoneTime);
         });
 
         return {
             type: 'timezone',
             timezones: timezones,
-            original: 'Time'
+            original: 'Time',
+            hourOffset: hourOffset // Store the offset for display
         };
     }
 
@@ -765,14 +771,13 @@ class CalculationEngine {
 
         const hours24 = zoneTime.getUTCHours();
         const minutes = zoneTime.getUTCMinutes();
-        const seconds = zoneTime.getUTCSeconds();
 
         // Convert to 12-hour format with AM/PM
         const period = hours24 >= 12 ? 'PM' : 'AM';
         const hours12 = hours24 % 12 || 12; // Convert 0 to 12 for midnight
 
-        // Format time as HH:MM:SS AM/PM
-        const timeString = `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${period}`;
+        // Format time as HH:MM AM/PM (without seconds)
+        const timeString = `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
 
         // Determine if it's night time (6 PM to 6 AM) - use 24-hour format for comparison
         const isNight = hours24 >= 18 || hours24 < 6;
@@ -782,7 +787,6 @@ class CalculationEngine {
             time: timeString,
             hours: hours24,
             minutes: minutes,
-            seconds: seconds,
             isNight: isNight,
             isLocal: isLocal
         };

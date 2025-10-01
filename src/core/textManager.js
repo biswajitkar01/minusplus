@@ -265,7 +265,7 @@ class TextManager {
     }
 
     displayTimezoneResults(element, calculation) {
-        // Clear any existing timezone results
+        // Clear any existing timezone results and timer
         this.clearTimezoneResults(element);
 
         const timezones = calculation.timezones;
@@ -276,9 +276,40 @@ class TextManager {
             element.timezoneResults = [];
         }
 
+        // Store timezone configuration for live updates including hour offset
+        element.timezoneConfig = timezones.map(tz => ({
+            label: tz.label,
+            offset: this.getOffsetFromLabel(tz.label),
+            isLocal: tz.isLocal
+        }));
+
+        // Store hour offset for live updates (from "time + 2" or "time - 3")
+        element.timezoneHourOffset = calculation.hourOffset || 0;
+
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
         let currentY = screenPos.y + inputHeight + 5;
+
+        // Add offset indicator if hours are added/subtracted
+        if (calculation.hourOffset && calculation.hourOffset !== 0) {
+            const offsetHeader = document.createElement('div');
+            offsetHeader.className = 'timezone-offset-header';
+            offsetHeader.textContent = calculation.hourOffset > 0
+                ? `+${calculation.hourOffset} hour${Math.abs(calculation.hourOffset) !== 1 ? 's' : ''} ahead`
+                : `${calculation.hourOffset} hour${Math.abs(calculation.hourOffset) !== 1 ? 's' : ''} behind`;
+            offsetHeader.style.position = 'absolute';
+            offsetHeader.style.zIndex = '1001';
+            offsetHeader.style.left = screenPos.x + 'px';
+            offsetHeader.style.top = currentY + 'px';
+
+            // Mark as header so it's not updated in live updates
+            offsetHeader.dataset.isHeader = 'true';
+
+            document.body.appendChild(offsetHeader);
+            element.timezoneResults.push(offsetHeader);
+
+            currentY += 30; // Move down for timezones
+        }
 
         // Create a result box for each timezone
         timezones.forEach((tz, index) => {
@@ -301,6 +332,11 @@ class TextManager {
             resultBox.style.left = screenPos.x + 'px';
             resultBox.style.top = currentY + 'px';
 
+            // Store timezone info on the element for updates
+            resultBox.dataset.label = tz.label;
+            resultBox.dataset.offset = this.getOffsetFromLabel(tz.label);
+            resultBox.dataset.isLocal = tz.isLocal;
+
             document.body.appendChild(resultBox);
             element.timezoneResults.push(resultBox);
 
@@ -312,9 +348,105 @@ class TextManager {
         if (element.resultElement) {
             element.resultElement.style.display = 'none';
         }
+
+        // Start live update timer
+        this.startTimezoneTimer(element);
+    }
+
+    getOffsetFromLabel(label) {
+        // Extract timezone offset from label
+        const offsetMap = {
+            'Pacific (PST)': -8,
+            'Mountain (MST)': -7,
+            'Central (CST)': -6,
+            'Eastern (EST)': -5,
+            'UTC': 0,
+            'India (IST)': 5.5
+        };
+
+        for (const [key, value] of Object.entries(offsetMap)) {
+            if (label.includes(key)) return value;
+        }
+        return 0;
+    }
+
+    startTimezoneTimer(element) {
+        // Clear any existing timer
+        if (element.timezoneTimer) {
+            clearInterval(element.timezoneTimer);
+        }
+
+        // Update every minute (60 seconds)
+        element.timezoneTimer = setInterval(() => {
+            if (!element.timezoneResults || element.timezoneResults.length === 0) {
+                clearInterval(element.timezoneTimer);
+                element.timezoneTimer = null;
+                return;
+            }
+
+            this.updateTimezoneDisplay(element);
+        }, 60000); // 60000ms = 60 seconds = 1 minute
+    }
+
+    updateTimezoneDisplay(element) {
+        if (!element.timezoneResults) return;
+
+        const now = new Date();
+
+        // Apply hour offset if present (from "time + 2" or "time - 3")
+        const hourOffset = element.timezoneHourOffset || 0;
+        const adjustedTime = new Date(now.getTime() + (hourOffset * 3600000));
+
+        element.timezoneResults.forEach((resultBox) => {
+            // Skip the offset header - it doesn't need to be updated
+            if (resultBox.dataset.isHeader === 'true') {
+                return;
+            }
+
+            const label = resultBox.dataset.label;
+            const offset = parseFloat(resultBox.dataset.offset);
+            const isLocal = resultBox.dataset.isLocal === 'true';
+
+            // Calculate current time for this timezone
+            const utcTime = Date.UTC(
+                adjustedTime.getUTCFullYear(),
+                adjustedTime.getUTCMonth(),
+                adjustedTime.getUTCDate(),
+                adjustedTime.getUTCHours(),
+                adjustedTime.getUTCMinutes(),
+                adjustedTime.getUTCSeconds()
+            );
+
+            const zoneTime = new Date(utcTime + (offset * 3600000));
+            const hours24 = zoneTime.getUTCHours();
+            const minutes = zoneTime.getUTCMinutes();
+
+            const period = hours24 >= 12 ? 'PM' : 'AM';
+            const hours12 = hours24 % 12 || 12;
+
+            // Format without seconds - HH:MM AM/PM
+            const timeString = `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+
+            // Update display
+            resultBox.textContent = `${label}: ${timeString}`;
+
+            // Update night/day styling
+            const isNight = hours24 >= 18 || hours24 < 6;
+            if (isNight) {
+                resultBox.classList.add('timezone-night');
+            } else {
+                resultBox.classList.remove('timezone-night');
+            }
+        });
     }
 
     clearTimezoneResults(element) {
+        // Clear the timer first
+        if (element.timezoneTimer) {
+            clearInterval(element.timezoneTimer);
+            element.timezoneTimer = null;
+        }
+
         if (element.timezoneResults) {
             element.timezoneResults.forEach(result => {
                 if (result.parentNode) {
@@ -481,7 +613,13 @@ class TextManager {
         element.timezoneResults.forEach((resultBox) => {
             resultBox.style.left = screenPos.x + 'px';
             resultBox.style.top = currentY + 'px';
-            currentY += 35; // Height of each timezone result box
+
+            // Use different spacing for header vs timezone results
+            if (resultBox.dataset.isHeader === 'true') {
+                currentY += 30; // Header spacing
+            } else {
+                currentY += 35; // Timezone result spacing
+            }
         });
     }
 
