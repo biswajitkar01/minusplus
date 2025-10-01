@@ -228,6 +228,18 @@ class ClipboardManager {
                 const selection = window.getSelection();
                 const selectedText = selection.toString().trim();
 
+                // Skip auto-copy when selection is inside timezone friend label or its editor
+                const anchorNode = selection.anchorNode;
+                if (anchorNode) {
+                    const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
+                    if (anchorEl) {
+                        const inNoCopy = anchorEl.closest('.tz-friend-label') || anchorEl.closest('.tz-label-input');
+                        if (inNoCopy) {
+                            return; // do not copy labels while editing or selecting them
+                        }
+                    }
+                }
+
                 if (selectedText && selectedText.length > 0) {
                     // Only auto-copy if it looks like a calculation result or number
                     if (this.shouldAutoCopy(selectedText)) {

@@ -327,6 +327,20 @@ class TextManager {
             }
 
             resultBox.textContent = `${tz.label}: ${tz.time}`;
+            // Base label (e.g., "Pacific (PST)") and optional saved friend label
+            resultBox.dataset.baseLabel = tz.label;
+            const tzKey = this.getIanaFromLabel(tz.label) || tz.label;
+            resultBox.dataset.tzKey = tzKey;
+            const savedFriend = this.getSavedTimezoneLabel(tzKey);
+            if (savedFriend) {
+                resultBox.dataset.friendLabel = savedFriend;
+                const color = this.labelToColor(savedFriend);
+                if (color) resultBox.style.setProperty('--label-color', color);
+            }
+
+            // Initial render and store initial time text for safe recomposition
+            resultBox.dataset.timeText = tz.time;
+            this.renderTimezoneRow(resultBox, resultBox.dataset.friendLabel || '', tz.label, tz.time);
             resultBox.style.position = 'absolute';
             resultBox.style.zIndex = '1001';
             resultBox.style.left = screenPos.x + 'px';
@@ -339,6 +353,9 @@ class TextManager {
 
             document.body.appendChild(resultBox);
             element.timezoneResults.push(resultBox);
+
+            // Enable inline label editing
+            this.enableTimezoneLabelEditing(resultBox);
 
             // Move down for next timezone (result box height + small gap)
             currentY += 35;
@@ -409,7 +426,8 @@ class TextManager {
                 return;
             }
 
-            const label = resultBox.dataset.label;
+            const baseLabel = resultBox.dataset.baseLabel || resultBox.dataset.label;
+            const friendLabel = resultBox.dataset.friendLabel || '';
             const offset = parseFloat(resultBox.dataset.offset);
             const isLocal = resultBox.dataset.isLocal === 'true';
 
@@ -432,9 +450,11 @@ class TextManager {
 
             // Format without seconds - HH:MM AM/PM
             const timeString = `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+            // Save latest time for safe recomposition after edits
+            resultBox.dataset.timeText = timeString;
 
-            // Update display
-            resultBox.textContent = `${label}: ${timeString}`;
+            // Update display with friend label if present
+            this.renderTimezoneRow(resultBox, friendLabel, baseLabel, timeString);
 
             // Update night/day styling
             const isNight = hours24 >= 18 || hours24 < 6;
@@ -444,6 +464,163 @@ class TextManager {
                 resultBox.classList.remove('timezone-night');
             }
         });
+    }
+
+    // Compose the display text for timezone rows
+    composeTimezoneText(friendLabel, baseLabel, timeText) {
+        const friend = friendLabel ? `${friendLabel} — ` : '';
+        return `${friend}${baseLabel}: ${timeText}`;
+    }
+
+    // Render timezone row with optional clickable friend label span
+    renderTimezoneRow(resultBox, friendLabel, baseLabel, timeText) {
+        // Clear and rebuild contents
+        while (resultBox.firstChild) resultBox.removeChild(resultBox.firstChild);
+        if (friendLabel) {
+            const span = document.createElement('span');
+            span.className = 'tz-friend-label';
+            span.textContent = friendLabel;
+            // Clicking label opens editor
+            span.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (resultBox._openTzLabelEditor) resultBox._openTzLabelEditor();
+            });
+            // Prevent text selection starting on label
+            span.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+
+            resultBox.appendChild(span);
+            resultBox.appendChild(document.createTextNode(' — '));
+        }
+        const tail = document.createTextNode(`${baseLabel}: ${timeText}`);
+        resultBox.appendChild(tail);
+    }
+
+    // Map display label to IANA timezone id
+    getIanaFromLabel(label) {
+        const map = {
+            'Pacific': 'America/Los_Angeles',
+            'Mountain': 'America/Denver',
+            'Central': 'America/Chicago',
+            'Eastern': 'America/New_York',
+            'UTC': 'UTC',
+            'India': 'Asia/Kolkata'
+        };
+        for (const [key, val] of Object.entries(map)) {
+            if (label.includes(key)) return val;
+        }
+        return null;
+    }
+
+    // Stable color from label using a fast hash -> hue mapping
+    labelToColor(label) {
+        if (!label) return null;
+        let h = 0x811c9dc5 >>> 0;
+        for (let i = 0; i < label.length; i++) {
+            h ^= label.charCodeAt(i);
+            h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+        }
+        const hue = h % 360;
+        return `hsl(${hue}deg, 65%, 58%)`;
+    }
+
+    // Local persistence for friend labels keyed by IANA timezone id
+    getSavedTimezoneLabel(tzKey) {
+        try {
+            const raw = localStorage.getItem('minusplus_tz_labels');
+            if (!raw) return null;
+            const map = JSON.parse(raw);
+            return map[tzKey] || null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    saveTimezoneLabel(tzKey, label) {
+        try {
+            const raw = localStorage.getItem('minusplus_tz_labels');
+            const map = raw ? JSON.parse(raw) : {};
+            if (label) map[tzKey] = label; else delete map[tzKey];
+            localStorage.setItem('minusplus_tz_labels', JSON.stringify(map));
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    // Enable inline editing for timezone labels (dblclick / long-press)
+    enableTimezoneLabelEditing(resultBox) {
+        const openEditor = () => {
+            if (resultBox.querySelector('.tz-label-input')) return;
+            // Signal highlighter and other systems to ignore this row during edit
+            resultBox.dataset.noHighlight = 'true';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = resultBox.dataset.friendLabel || '';
+            input.className = 'tz-label-input';
+            input.placeholder = 'Label (e.g., Jack)';
+            input.setAttribute('aria-label', 'Timezone label');
+            input.style.position = 'absolute';
+            input.style.transform = 'translateY(-120%)';
+            input.style.left = '10px';
+            input.style.fontFamily = 'var(--font-family-mono)';
+            input.style.fontSize = '12px';
+            input.style.padding = '2px 6px';
+            input.style.borderRadius = '8px';
+            input.style.border = '1px solid rgba(255,255,255,0.15)';
+            input.style.background = 'rgba(0,0,0,0.6)';
+            input.style.color = 'var(--text-primary)';
+            input.style.zIndex = '10002';
+            // Prevent bubbling that could retrigger handlers
+            input.addEventListener('mousedown', e => e.stopPropagation());
+            input.addEventListener('click', e => e.stopPropagation());
+            resultBox.appendChild(input);
+            input.focus();
+            input.select();
+
+            const save = () => {
+                if (!input.parentNode) return;
+                const newLabel = input.value.trim();
+                input.parentNode.removeChild(input);
+                const tzKey = resultBox.dataset.tzKey;
+                if (newLabel) {
+                    resultBox.dataset.friendLabel = newLabel;
+                    this.saveTimezoneLabel(tzKey, newLabel);
+                    const color = this.labelToColor(newLabel);
+                    if (color) resultBox.style.setProperty('--label-color', color);
+                } else {
+                    delete resultBox.dataset.friendLabel;
+                    this.saveTimezoneLabel(tzKey, null);
+                    resultBox.style.removeProperty('--label-color');
+                }
+                const base = resultBox.dataset.baseLabel || resultBox.dataset.label || '';
+                const timePart = resultBox.dataset.timeText || '';
+                this.renderTimezoneRow(resultBox, resultBox.dataset.friendLabel || '', base, timePart);
+                // Allow highlighting again
+                delete resultBox.dataset.noHighlight;
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') save();
+                if (e.key === 'Escape') {
+                    if (input.parentNode) input.parentNode.removeChild(input);
+                    delete resultBox.dataset.noHighlight;
+                }
+            });
+            input.addEventListener('blur', save);
+        };
+
+        // Expose opener for the label span
+        resultBox._openTzLabelEditor = openEditor;
+        // Prevent text selection on double-click and open editor
+        resultBox.addEventListener('dblclick', (e) => { e.preventDefault(); e.stopPropagation(); openEditor(); });
+
+        // Mobile: long-press only on touch to avoid desktop conflicts
+        let timer = null;
+        const start = () => { timer = setTimeout(openEditor, 500); };
+        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        resultBox.addEventListener('touchstart', start, { passive: true });
+        resultBox.addEventListener('touchend', cancel);
+        resultBox.addEventListener('touchcancel', cancel);
     }
 
     clearTimezoneResults(element) {
