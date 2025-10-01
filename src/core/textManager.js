@@ -357,20 +357,24 @@ class TextManager {
         // Extract timezone offset from label
         const offsetMap = {
             'Pacific (PST)': -8,
+            'Pacific (PST) (Source)': -8,
             'Mountain (MST)': -7,
+            'Mountain (MST) (Source)': -7,
             'Central (CST)': -6,
+            'Central (CST) (Source)': -6,
             'Eastern (EST)': -5,
+            'Eastern (EST) (Source)': -5,
             'UTC': 0,
-            'India (IST)': 5.5
+            'UTC (Source)': 0,
+            'India (IST)': 5.5,
+            'India (IST) (Source)': 5.5
         };
 
         for (const [key, value] of Object.entries(offsetMap)) {
             if (label.includes(key)) return value;
         }
         return 0;
-    }
-
-    startTimezoneTimer(element) {
+    } startTimezoneTimer(element) {
         // Clear any existing timer
         if (element.timezoneTimer) {
             clearInterval(element.timezoneTimer);

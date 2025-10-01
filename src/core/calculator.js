@@ -29,6 +29,17 @@ class CalculationEngine {
 
         const cleanText = text.trim();
 
+        // Check for specific time with timezone (e.g., "10:30 PM MST" or "10:30 PM MST + 2")
+        const specificTimeMatch = cleanText.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)\s+(PST|MST|CST|EST|UTC|IST)\s*([-+]\s*\d+)?$/i);
+        if (specificTimeMatch) {
+            const hours = parseInt(specificTimeMatch[1]);
+            const minutes = parseInt(specificTimeMatch[2]);
+            const period = specificTimeMatch[3].toUpperCase();
+            const timezone = specificTimeMatch[4].toUpperCase();
+            const offsetHours = specificTimeMatch[5] ? parseFloat(specificTimeMatch[5].replace(/\s/g, '')) : 0;
+            return this.convertSpecificTime(hours, minutes, period, timezone, offsetHours);
+        }
+
         // Check for timezone conversion keyword with optional offset
         const timeMatch = cleanText.toLowerCase().match(/^time\s*([-+]\s*\d+)?$/);
         if (timeMatch) {
@@ -699,6 +710,74 @@ class CalculationEngine {
             median: median,
             min: Math.min(...numbers),
             max: Math.max(...numbers)
+        };
+    }
+
+    // Convert specific time from one timezone to all others
+    convertSpecificTime(hours, minutes, period, sourceTimezone, hourOffset = 0) {
+        // Define timezone offsets
+        const timezoneOffsets = {
+            'PST': -8,
+            'MST': -7,
+            'CST': -6,
+            'EST': -5,
+            'UTC': 0,
+            'IST': 5.5
+        };
+
+        const timezoneLabels = {
+            'PST': 'Pacific (PST)',
+            'MST': 'Mountain (MST)',
+            'CST': 'Central (CST)',
+            'EST': 'Eastern (EST)',
+            'UTC': 'UTC',
+            'IST': 'India (IST)'
+        };
+
+        // Convert 12-hour to 24-hour format
+        let hours24 = hours;
+        if (period === 'PM' && hours !== 12) {
+            hours24 = hours + 12;
+        } else if (period === 'AM' && hours === 12) {
+            hours24 = 0;
+        }
+
+        // Get source timezone offset
+        const sourceOffset = timezoneOffsets[sourceTimezone];
+
+        // Create a base time in UTC for the source timezone
+        // Calculate UTC time from source timezone time
+        const utcHours = hours24 - sourceOffset;
+        const baseTime = new Date();
+        baseTime.setUTCHours(utcHours);
+        baseTime.setUTCMinutes(minutes);
+        baseTime.setUTCSeconds(0);
+
+        // Apply hour offset if provided
+        const adjustedTime = new Date(baseTime.getTime() + (hourOffset * 3600000));
+
+        // Build timezone results
+        const timezones = [];
+        const allTimezones = Object.keys(timezoneOffsets);
+
+        // Add source timezone first (highlighted as source)
+        const sourceTime = this.formatTimeForZone(adjustedTime, sourceOffset, `${timezoneLabels[sourceTimezone]} (Source)`, true);
+        timezones.push(sourceTime);
+
+        // Add other timezones
+        allTimezones.forEach(tz => {
+            if (tz !== sourceTimezone) {
+                const zoneTime = this.formatTimeForZone(adjustedTime, timezoneOffsets[tz], timezoneLabels[tz], false);
+                timezones.push(zoneTime);
+            }
+        });
+
+        return {
+            type: 'timezone',
+            timezones: timezones,
+            original: `${hours}:${String(minutes).padStart(2, '0')} ${period} ${sourceTimezone}`,
+            hourOffset: hourOffset,
+            isSpecificTime: true
         };
     }
 
