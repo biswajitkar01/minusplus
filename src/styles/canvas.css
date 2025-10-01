@@ -169,6 +169,68 @@
     opacity: 1;
 }
 
+/* Timezone conversion results */
+.timezone-result {
+    font-family: var(--font-family-mono);
+    font-size: 14px;
+    min-width: 220px;
+    padding: 6px 10px;
+    margin-bottom: 2px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Timezone offset header (for "time + 2" or "time - 3") */
+.timezone-offset-header {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    color: var(--accent-purple);
+    background: rgba(159, 79, 255, 0.1);
+    border: 1px solid rgba(159, 79, 255, 0.3);
+    border-radius: var(--border-radius);
+    padding: 4px 10px;
+    margin-bottom: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Night time styling - darker background */
+.timezone-result.timezone-night {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.15);
+    opacity: 0.8;
+}
+
+/* Local timezone styling - highlighted */
+.timezone-result.timezone-local {
+    border-color: var(--accent-blue);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px rgba(0, 122, 204, 0.3);
+}
+
+/* Subtle live indicator - small dot that pulses */
+.timezone-result::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    margin-right: 8px;
+    animation: timezone-pulse 2s ease-in-out infinite;
+}
+
+@keyframes timezone-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
 /* Inline result overlays for mixed calculations (legacy - keep for now) */
 .inline-result-overlay {
     position: absolute;
