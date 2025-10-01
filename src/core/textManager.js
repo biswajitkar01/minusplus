@@ -354,24 +354,26 @@ class TextManager {
     }
 
     getOffsetFromLabel(label) {
-        // Extract timezone offset from label
-        const offsetMap = {
-            'Pacific (PST)': -8,
-            'Pacific (PST) (Source)': -8,
-            'Mountain (MST)': -7,
-            'Mountain (MST) (Source)': -7,
-            'Central (CST)': -6,
-            'Central (CST) (Source)': -6,
-            'Eastern (EST)': -5,
-            'Eastern (EST) (Source)': -5,
-            'UTC': 0,
-            'UTC (Source)': 0,
-            'India (IST)': 5.5,
-            'India (IST) (Source)': 5.5
+        // Map timezone labels to IANA timezone identifiers (handles DST automatically)
+        const ianaMap = {
+            'Pacific': 'America/Los_Angeles',  // PST/PDT
+            'Mountain': 'America/Denver',       // MST/MDT
+            'Central': 'America/Chicago',       // CST/CDT
+            'Eastern': 'America/New_York',      // EST/EDT
+            'UTC': 'UTC',
+            'India': 'Asia/Kolkata'             // IST
         };
 
-        for (const [key, value] of Object.entries(offsetMap)) {
-            if (label.includes(key)) return value;
+        // Find matching timezone in label
+        for (const [key, ianaTimezone] of Object.entries(ianaMap)) {
+            if (label.includes(key)) {
+                // Get current offset for this timezone (accounts for DST)
+                const now = new Date();
+                const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+                const tzDate = new Date(now.toLocaleString('en-US', { timeZone: ianaTimezone }));
+                const offset = (tzDate - utcDate) / (1000 * 60 * 60); // Convert ms to hours
+                return offset;
+            }
         }
         return 0;
     } startTimezoneTimer(element) {
