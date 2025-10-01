@@ -75,6 +75,10 @@ class TextHighlighter {
         });
 
         document.querySelectorAll('.calculation-result, .inline-calculation-result').forEach(result => {
+            // Skip while an inline timezone label editor is open or when explicitly disabled
+            if (result.dataset.noHighlight === 'true' || result.classList.contains('no-highlight') || result.querySelector('.tz-label-input')) {
+                return;
+            }
             console.log('Found result:', result, 'text:', result.textContent);
             elements.push({
                 element: result,

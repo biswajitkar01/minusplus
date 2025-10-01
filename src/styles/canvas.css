@@ -214,9 +214,55 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--accent-green);
+    background: var(--label-color, var(--accent-green));
     margin-right: 8px;
     animation: timezone-pulse 2s ease-in-out infinite;
+}
+
+/* Clickable friend label with dotted underline on hover */
+.tz-friend-label {
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.tz-friend-label:hover {
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Reduce accidental selection on timezone rows */
+.timezone-result {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Inline editor for timezone friend label */
+.tz-label-input {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.2em;
+    padding: 3px 8px;
+    outline: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    caret-color: var(--accent-blue);
+}
+
+.tz-label-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.tz-label-input:focus {
+    border-color: rgba(0, 122, 204, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 122, 204, 0.35), 0 0 0 2px rgba(0, 122, 204, 0.15);
 }
 
 @keyframes timezone-pulse {
