@@ -174,8 +174,8 @@
     font-family: var(--font-family-mono);
     font-size: 14px;
     min-width: 220px;
-    padding: 6px 10px;
-    margin-bottom: 2px;
+    padding: 5.7px 10px;
+    /* margin-bottom: 10px; */
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -186,7 +186,7 @@
     color: var(--accent-purple);
     background: rgba(159, 79, 255, 0.1);
     border: 1px solid rgba(159, 79, 255, 0.3);
-    border-radius: var(--border-radius);
+    border-radius: 0.2em;
     padding: 4px 10px;
     margin-bottom: 4px;
     text-align: center;

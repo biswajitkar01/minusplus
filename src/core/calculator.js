@@ -715,14 +715,14 @@ class CalculationEngine {
 
     // Convert specific time from one timezone to all others
     convertSpecificTime(hours, minutes, period, sourceTimezone, hourOffset = 0) {
-        // Define timezone offsets
-        const timezoneOffsets = {
-            'PST': -8,
-            'MST': -7,
-            'CST': -6,
-            'EST': -5,
-            'UTC': 0,
-            'IST': 5.5
+        // Define timezone IANA identifiers (handles DST automatically)
+        const timezoneMap = {
+            'PST': 'America/Los_Angeles',
+            'MST': 'America/Denver',
+            'CST': 'America/Chicago',
+            'EST': 'America/New_York',
+            'UTC': 'UTC',
+            'IST': 'Asia/Kolkata'
         };
 
         const timezoneLabels = {
@@ -742,32 +742,49 @@ class CalculationEngine {
             hours24 = 0;
         }
 
-        // Get source timezone offset
-        const sourceOffset = timezoneOffsets[sourceTimezone];
+        // Create a date in the source timezone
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const timeString = `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 
-        // Create a base time in UTC for the source timezone
-        // Calculate UTC time from source timezone time
-        const utcHours = hours24 - sourceOffset;
-        const baseTime = new Date();
-        baseTime.setUTCHours(utcHours);
-        baseTime.setUTCMinutes(minutes);
-        baseTime.setUTCSeconds(0);
+        // Parse the time in the source timezone
+        const sourceIANA = timezoneMap[sourceTimezone];
+        const localDateString = `${dateString}T${timeString}`;
+
+        // Create date as if it's in the source timezone
+        const sourceDate = new Date(localDateString);
+        const sourceFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: sourceIANA,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        // Get UTC time by offsetting from source timezone
+        const utcDate = new Date(sourceDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+        const sourceLocalDate = new Date(sourceDate.toLocaleString('en-US', { timeZone: sourceIANA }));
+        const offset = sourceDate.getTime() - (sourceLocalDate.getTime() - utcDate.getTime());
+        const baseTime = new Date(offset);
 
         // Apply hour offset if provided
         const adjustedTime = new Date(baseTime.getTime() + (hourOffset * 3600000));
 
         // Build timezone results
         const timezones = [];
-        const allTimezones = Object.keys(timezoneOffsets);
+        const allTimezones = Object.keys(timezoneMap);
 
         // Add source timezone first (highlighted as source)
-        const sourceTime = this.formatTimeForZone(adjustedTime, sourceOffset, `${timezoneLabels[sourceTimezone]} (Source)`, true);
+        const sourceTime = this.formatTimeForTimezone(adjustedTime, sourceIANA, `${timezoneLabels[sourceTimezone]} (Source)`, true);
         timezones.push(sourceTime);
 
         // Add other timezones
         allTimezones.forEach(tz => {
             if (tz !== sourceTimezone) {
-                const zoneTime = this.formatTimeForZone(adjustedTime, timezoneOffsets[tz], timezoneLabels[tz], false);
+                const zoneTime = this.formatTimeForTimezone(adjustedTime, timezoneMap[tz], timezoneLabels[tz], false);
                 timezones.push(zoneTime);
             }
         });
@@ -788,26 +805,48 @@ class CalculationEngine {
         // Apply hour offset if provided (for "time + 2" or "time - 3")
         const adjustedTime = new Date(now.getTime() + (hourOffset * 3600000));
 
-        // Define all timezones with their UTC offsets
+        // Define all timezones with IANA identifiers (handles DST automatically)
         const allTimezones = [
-            { name: 'PST', label: 'Pacific (PST)', offset: -8 },
-            { name: 'MST', label: 'Mountain (MST)', offset: -7 },
-            { name: 'CST', label: 'Central (CST)', offset: -6 },
-            { name: 'EST', label: 'Eastern (EST)', offset: -5 },
-            { name: 'UTC', label: 'UTC', offset: 0 },
-            { name: 'IST', label: 'India (IST)', offset: 5.5 }
+            { name: 'PST', label: 'Pacific (PST)', iana: 'America/Los_Angeles' },
+            { name: 'MST', label: 'Mountain (MST)', iana: 'America/Denver' },
+            { name: 'CST', label: 'Central (CST)', iana: 'America/Chicago' },
+            { name: 'EST', label: 'Eastern (EST)', iana: 'America/New_York' },
+            { name: 'UTC', label: 'UTC', iana: 'UTC' },
+            { name: 'IST', label: 'India (IST)', iana: 'Asia/Kolkata' }
         ];
 
-        // Detect user's local timezone
-        const localOffset = -now.getTimezoneOffset() / 60;
+        // Detect user's local timezone using Intl
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        // Find if user's timezone matches one of our supported timezones
         let localZone = null;
+        for (const tz of allTimezones) {
+            if (userTimezone === tz.iana || userTimezone.includes(tz.name)) {
+                localZone = tz;
+                break;
+            }
+        }
 
-        // Find closest matching timezone
-        const closestMatch = allTimezones.reduce((prev, curr) => {
-            return Math.abs(curr.offset - localOffset) < Math.abs(prev.offset - localOffset) ? curr : prev;
-        });
+        // If no exact match, find closest by offset
+        if (!localZone) {
+            const localOffset = -now.getTimezoneOffset() / 60;
+            // Get current offset for each timezone (accounting for DST)
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                hour: 'numeric',
+                timeZoneName: 'short'
+            });
 
-        localZone = closestMatch;
+            localZone = allTimezones.reduce((prev, curr) => {
+                const currDate = new Date(now.toLocaleString('en-US', { timeZone: curr.iana }));
+                const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+                const currOffset = (currDate - utcDate) / 3600000;
+
+                const prevDate = new Date(now.toLocaleString('en-US', { timeZone: prev.iana }));
+                const prevOffset = (prevDate - utcDate) / 3600000;
+
+                return Math.abs(currOffset - localOffset) < Math.abs(prevOffset - localOffset) ? curr : prev;
+            });
+        }
 
         // Get other 5 timezones (exclude local)
         const otherZones = allTimezones.filter(tz => tz.name !== localZone.name);
@@ -816,12 +855,12 @@ class CalculationEngine {
         const timezones = [];
 
         // Add local timezone first
-        const localTime = this.formatTimeForZone(adjustedTime, localOffset, localZone.label, true);
+        const localTime = this.formatTimeForTimezone(adjustedTime, localZone.iana, localZone.label, true);
         timezones.push(localTime);
 
         // Add other 5 timezones
         otherZones.forEach(tz => {
-            const zoneTime = this.formatTimeForZone(adjustedTime, tz.offset, tz.label, false);
+            const zoneTime = this.formatTimeForTimezone(adjustedTime, tz.iana, tz.label, false);
             timezones.push(zoneTime);
         });
 
@@ -830,6 +869,42 @@ class CalculationEngine {
             timezones: timezones,
             original: 'Time',
             hourOffset: hourOffset // Store the offset for display
+        };
+    }
+
+    formatTimeForTimezone(date, ianaTimezone, label, isLocal) {
+        // Use Intl.DateTimeFormat for proper timezone conversion (handles DST)
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: ianaTimezone,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        const timeString = formatter.format(date);
+
+        // Get 24-hour format for night/day detection
+        const formatter24 = new Intl.DateTimeFormat('en-US', {
+            timeZone: ianaTimezone,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        const time24 = formatter24.format(date);
+        const hours24 = parseInt(time24.split(':')[0]);
+        const minutes = parseInt(time24.split(':')[1]);
+
+        // Determine if it's night time (6 PM to 6 AM)
+        const isNight = hours24 >= 18 || hours24 < 6;
+
+        return {
+            label: isLocal ? `${label} (Local)` : label,
+            time: timeString,
+            hours: hours24,
+            minutes: minutes,
+            isNight: isNight,
+            isLocal: isLocal
         };
     }
 
