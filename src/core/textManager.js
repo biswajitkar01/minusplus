@@ -375,8 +375,12 @@ class TextManager {
             element.resultElement.style.display = 'none';
         }
 
-        // Start live update timer
-        this.startTimezoneTimer(element);
+        // ONLY start live update timer if this is NOT a specific time conversion
+        // "time" keyword → start timer for live updates
+        // "10:30 AM CST" → NO timer, static conversion
+        if (!element.isSpecificTime) {
+            this.startTimezoneTimer(element);
+        }
     }
 
     getOffsetFromLabel(label) {
@@ -408,16 +412,30 @@ class TextManager {
             clearInterval(element.timezoneTimer);
         }
 
-        // Update every minute (60 seconds)
-        element.timezoneTimer = setInterval(() => {
-            if (!element.timezoneResults || element.timezoneResults.length === 0) {
-                clearInterval(element.timezoneTimer);
-                element.timezoneTimer = null;
-                return;
-            }
+        // Calculate delay to next minute boundary for sync
+        const now = new Date();
+        const secondsUntilNextMinute = 60 - now.getSeconds();
+        const msUntilNextMinute = (secondsUntilNextMinute * 1000) - now.getMilliseconds();
 
+        // Update immediately to show current time
+        this.updateTimezoneDisplay(element);
+
+        // Wait until the next minute boundary, then update every minute
+        setTimeout(() => {
+            // Update at the minute boundary
             this.updateTimezoneDisplay(element);
-        }, 60000); // 60000ms = 60 seconds = 1 minute
+
+            // Then set interval to update every 60 seconds
+            element.timezoneTimer = setInterval(() => {
+                if (!element.timezoneResults || element.timezoneResults.length === 0) {
+                    clearInterval(element.timezoneTimer);
+                    element.timezoneTimer = null;
+                    return;
+                }
+
+                this.updateTimezoneDisplay(element);
+            }, 60000); // 60000ms = 60 seconds = 1 minute
+        }, msUntilNextMinute);
     }
 
     updateTimezoneDisplay(element) {

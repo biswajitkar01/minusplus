@@ -742,58 +742,109 @@ class CalculationEngine {
             hours24 = 0;
         }
 
-        // Create a date string that represents the time in the source timezone
+        // Get current date for accurate timezone offset calculation (handles DST)
         const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const hour = String(hours24).padStart(2, '0');
-        const minute = String(minutes).padStart(2, '0');
 
-        // Create an ISO string WITHOUT timezone info (this is the time as-is in the source timezone)
-        const localTimeString = `${year}-${month}-${day}T${hour}:${minute}:00`;
-
-        // Get the source timezone IANA
+        // Create a date string in the source timezone
+        // We'll use Intl API to properly handle timezone conversions
         const sourceIANA = timezoneMap[sourceTimezone];
 
-        // Parse this time AS IF it's in the source timezone
-        // We need to get the UTC equivalent of this local time
-        const sourceDate = new Date(localTimeString);
+        // Create a date object with the specified time
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const timeStr = `${String(hours24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 
-        // Get what this date would be when formatted in source timezone
-        const sourceFormatted = new Date(sourceDate.toLocaleString('en-US', { timeZone: sourceIANA }));
+        // Parse the time as if it's in the source timezone
+        // Create date in local time first
+        const localDate = new Date(`${dateStr}T${timeStr}`);
 
-        // Get what this date would be when formatted in UTC
-        const utcFormatted = new Date(sourceDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+        // Get the offset of the source timezone at this date/time
+        const sourceFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: sourceIANA,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZoneName: 'short'
+        });
 
-        // The difference tells us the offset
-        const tzOffset = sourceFormatted.getTime() - utcFormatted.getTime();
+        // Get UTC offset for source timezone
+        const utcFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'UTC',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
 
-        // Now create the actual UTC time by reversing the offset
-        const utcTime = new Date(sourceDate.getTime() - tzOffset);
+        // Create a date that represents the input time in the source timezone
+        // We need to find what UTC time corresponds to the given local time in source timezone
+        const testDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hours24, minutes, 0));
+
+        // Format this date in source timezone
+        const sourceFormatted = sourceFormatter.format(testDate);
+        const utcFormatted = utcFormatter.format(testDate);
+
+        // Parse both to get the offset
+        const sourceParts = sourceFormatted.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)/);
+        const utcParts = utcFormatted.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)/);
+
+        if (!sourceParts || !utcParts) {
+            // Fallback to simple offset calculation
+            const sourceOffset = this.getTimezoneOffsetHours(sourceIANA);
+            const baseUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hours24 - sourceOffset, minutes, 0);
+            const adjustedUTC = baseUTC + (hourOffset * 3600000);
+
+            return this.buildTimezoneResults(new Date(adjustedUTC), sourceTimezone, timezoneMap, timezoneLabels, hours, minutes, period, hourOffset);
+        }
+
+        // Calculate the difference to get proper UTC time
+        const sourceTime = new Date(sourceParts[3], sourceParts[1] - 1, sourceParts[2], sourceParts[4], sourceParts[5], sourceParts[6]);
+        const utcTime = new Date(utcParts[3], utcParts[1] - 1, utcParts[2], utcParts[4], utcParts[5], utcParts[6]);
+
+        const offsetMs = sourceTime - utcTime;
+
+        // Now create the actual UTC time for the input
+        const inputUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hours24, minutes, 0) - offsetMs;
 
         // Apply hour offset if provided
-        const adjustedTime = new Date(utcTime.getTime() + (hourOffset * 3600000));
+        const adjustedUTC = inputUTC + (hourOffset * 3600000);
 
-        // Build timezone results
+        return this.buildTimezoneResults(new Date(adjustedUTC), sourceTimezone, timezoneMap, timezoneLabels, hours, minutes, period, hourOffset);
+    }
+
+    // Helper to get timezone offset in hours
+    getTimezoneOffsetHours(ianaTimezone) {
+        const now = new Date();
+        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+        const tzDate = new Date(now.toLocaleString('en-US', { timeZone: ianaTimezone }));
+        return (tzDate - utcDate) / (1000 * 60 * 60);
+    }
+
+    // Build timezone results array
+    buildTimezoneResults(utcDate, sourceTimezone, timezoneMap, timezoneLabels, originalHours, originalMinutes, originalPeriod, hourOffset) {
         const timezones = [];
         const allTimezones = Object.keys(timezoneMap);
 
-        // For source timezone, show the ORIGINAL input time (not converted)
-        const sourceTimeResult = {
+        // For source timezone, show the ORIGINAL input time
+        timezones.push({
             label: `${timezoneLabels[sourceTimezone]}`,
-            time: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`,
-            hours: hours24,
-            minutes: minutes,
-            isNight: hours24 >= 18 || hours24 < 6,
+            time: `${String(originalHours).padStart(2, '0')}:${String(originalMinutes).padStart(2, '0')} ${originalPeriod}`,
+            hours: originalPeriod === 'PM' && originalHours !== 12 ? originalHours + 12 : (originalPeriod === 'AM' && originalHours === 12 ? 0 : originalHours),
+            minutes: originalMinutes,
+            isNight: false, // Will be calculated based on 24h format
             isLocal: false
-        };
-        timezones.push(sourceTimeResult);
+        });
 
-        // Add other timezones with proper conversion
+        // Convert to all other timezones
         allTimezones.forEach(tz => {
             if (tz !== sourceTimezone) {
-                const zoneTime = this.formatTimeForTimezone(adjustedTime, timezoneMap[tz], timezoneLabels[tz], false);
+                const zoneTime = this.formatTimeForTimezone(utcDate, timezoneMap[tz], timezoneLabels[tz], false);
                 timezones.push(zoneTime);
             }
         });
@@ -801,7 +852,7 @@ class CalculationEngine {
         return {
             type: 'timezone',
             timezones: timezones,
-            original: `${hours}:${String(minutes).padStart(2, '0')} ${period} ${sourceTimezone}`,
+            original: `${originalHours}:${String(originalMinutes).padStart(2, '0')} ${originalPeriod} ${sourceTimezone}`,
             hourOffset: hourOffset,
             isSpecificTime: true,
             sourceTimezone: sourceTimezone
