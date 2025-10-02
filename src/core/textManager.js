@@ -578,13 +578,17 @@ class TextManager {
             input.style.transform = 'translateY(-120%)';
             input.style.left = '10px';
             input.style.fontFamily = 'var(--font-family-mono)';
-            input.style.fontSize = '12px';
-            input.style.padding = '2px 6px';
-            input.style.borderRadius = '8px';
-            input.style.border = '1px solid rgba(255,255,255,0.15)';
-            input.style.background = 'rgba(0,0,0,0.6)';
-            input.style.color = 'var(--text-primary)';
+            input.style.fontSize = '13px';
+            input.style.padding = '2px 5px';
+            input.style.borderRadius = '6px';
+            input.style.border = '2px solid #007acc';
+            input.style.background = '#000000ff';
+            input.style.color = '#ffffff';
             input.style.zIndex = '10002';
+            input.style.minWidth = '180px';
+            input.style.outline = 'none';
+            input.style.boxShadow = '0 6px 20px #000000, 0 0 0 1px #007acc';
+            input.style.caretColor = '#007acc';
             // Prevent bubbling that could retrigger handlers
             input.addEventListener('mousedown', e => e.stopPropagation());
             input.addEventListener('click', e => e.stopPropagation());
