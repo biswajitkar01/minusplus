@@ -286,6 +286,10 @@ class TextManager {
         // Store hour offset for live updates (from "time + 2" or "time - 3")
         element.timezoneHourOffset = calculation.hourOffset || 0;
 
+        // Store source timezone and original time if this is a specific time conversion
+        element.isSpecificTime = calculation.isSpecificTime || false;
+        element.sourceTimezone = calculation.sourceTimezone || null;
+
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
         let currentY = screenPos.y + inputHeight + 5;
@@ -340,6 +344,11 @@ class TextManager {
 
             // Initial render and store initial time text for safe recomposition
             resultBox.dataset.timeText = tz.time;
+
+            // Mark if this is the source timezone for specific time conversions
+            resultBox.dataset.isSourceTimezone = (index === 0 && element.isSpecificTime) ? 'true' : 'false';
+            resultBox.dataset.originalTime = tz.time; // Store original input time
+
             this.renderTimezoneRow(resultBox, resultBox.dataset.friendLabel || '', tz.label, tz.time);
             resultBox.style.position = 'absolute';
             resultBox.style.zIndex = '1001';
@@ -418,11 +427,20 @@ class TextManager {
 
         // Apply hour offset if present (from "time + 2" or "time - 3")
         const hourOffset = element.timezoneHourOffset || 0;
-        const adjustedTime = new Date(now.getTime() + (hourOffset * 3600000));
 
         element.timezoneResults.forEach((resultBox) => {
             // Skip the offset header - it doesn't need to be updated
             if (resultBox.dataset.isHeader === 'true') {
+                return;
+            }
+
+            // If this is the source timezone in a specific time conversion, don't update it
+            if (resultBox.dataset.isSourceTimezone === 'true') {
+                // Keep the original time, just update the display in case friend label changed
+                const base = resultBox.dataset.baseLabel || resultBox.dataset.label || '';
+                const timePart = resultBox.dataset.originalTime || resultBox.dataset.timeText || '';
+                const friendLabel = resultBox.dataset.friendLabel || '';
+                this.renderTimezoneRow(resultBox, friendLabel, base, timePart);
                 return;
             }
 
@@ -432,16 +450,13 @@ class TextManager {
             const isLocal = resultBox.dataset.isLocal === 'true';
 
             // Calculate current time for this timezone
-            const utcTime = Date.UTC(
-                adjustedTime.getUTCFullYear(),
-                adjustedTime.getUTCMonth(),
-                adjustedTime.getUTCDate(),
-                adjustedTime.getUTCHours(),
-                adjustedTime.getUTCMinutes(),
-                adjustedTime.getUTCSeconds()
-            );
+            // Get UTC time in milliseconds, add timezone offset, then add hour offset
+            const utcTime = now.getTime();
+            const timezoneOffsetMs = offset * 3600000; // Convert hours to milliseconds
+            const hourOffsetMs = hourOffset * 3600000; // Convert hour offset to milliseconds
+            const zoneTime = new Date(utcTime + timezoneOffsetMs + hourOffsetMs);
 
-            const zoneTime = new Date(utcTime + (offset * 3600000));
+            // Get hours and minutes in UTC (which now represents the target timezone)
             const hours24 = zoneTime.getUTCHours();
             const minutes = zoneTime.getUTCMinutes();
 
