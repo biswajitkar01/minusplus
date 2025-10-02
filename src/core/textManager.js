@@ -286,6 +286,10 @@ class TextManager {
         // Store hour offset for live updates (from "time + 2" or "time - 3")
         element.timezoneHourOffset = calculation.hourOffset || 0;
 
+        // Store source timezone and original time if this is a specific time conversion
+        element.isSpecificTime = calculation.isSpecificTime || false;
+        element.sourceTimezone = calculation.sourceTimezone || null;
+
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         const inputHeight = element.input.offsetHeight || parseInt(element.input.style.height) || 40;
         let currentY = screenPos.y + inputHeight + 5;
@@ -340,6 +344,11 @@ class TextManager {
 
             // Initial render and store initial time text for safe recomposition
             resultBox.dataset.timeText = tz.time;
+
+            // Mark if this is the source timezone for specific time conversions
+            resultBox.dataset.isSourceTimezone = (index === 0 && element.isSpecificTime) ? 'true' : 'false';
+            resultBox.dataset.originalTime = tz.time; // Store original input time
+
             this.renderTimezoneRow(resultBox, resultBox.dataset.friendLabel || '', tz.label, tz.time);
             resultBox.style.position = 'absolute';
             resultBox.style.zIndex = '1001';
@@ -366,8 +375,12 @@ class TextManager {
             element.resultElement.style.display = 'none';
         }
 
-        // Start live update timer
-        this.startTimezoneTimer(element);
+        // ONLY start live update timer if this is NOT a specific time conversion
+        // "time" keyword → start timer for live updates
+        // "10:30 AM CST" → NO timer, static conversion
+        if (!element.isSpecificTime) {
+            this.startTimezoneTimer(element);
+        }
     }
 
     getOffsetFromLabel(label) {
@@ -399,16 +412,30 @@ class TextManager {
             clearInterval(element.timezoneTimer);
         }
 
-        // Update every minute (60 seconds)
-        element.timezoneTimer = setInterval(() => {
-            if (!element.timezoneResults || element.timezoneResults.length === 0) {
-                clearInterval(element.timezoneTimer);
-                element.timezoneTimer = null;
-                return;
-            }
+        // Calculate delay to next minute boundary for sync
+        const now = new Date();
+        const secondsUntilNextMinute = 60 - now.getSeconds();
+        const msUntilNextMinute = (secondsUntilNextMinute * 1000) - now.getMilliseconds();
 
+        // Update immediately to show current time
+        this.updateTimezoneDisplay(element);
+
+        // Wait until the next minute boundary, then update every minute
+        setTimeout(() => {
+            // Update at the minute boundary
             this.updateTimezoneDisplay(element);
-        }, 60000); // 60000ms = 60 seconds = 1 minute
+
+            // Then set interval to update every 60 seconds
+            element.timezoneTimer = setInterval(() => {
+                if (!element.timezoneResults || element.timezoneResults.length === 0) {
+                    clearInterval(element.timezoneTimer);
+                    element.timezoneTimer = null;
+                    return;
+                }
+
+                this.updateTimezoneDisplay(element);
+            }, 60000); // 60000ms = 60 seconds = 1 minute
+        }, msUntilNextMinute);
     }
 
     updateTimezoneDisplay(element) {
@@ -418,11 +445,20 @@ class TextManager {
 
         // Apply hour offset if present (from "time + 2" or "time - 3")
         const hourOffset = element.timezoneHourOffset || 0;
-        const adjustedTime = new Date(now.getTime() + (hourOffset * 3600000));
 
         element.timezoneResults.forEach((resultBox) => {
             // Skip the offset header - it doesn't need to be updated
             if (resultBox.dataset.isHeader === 'true') {
+                return;
+            }
+
+            // If this is the source timezone in a specific time conversion, don't update it
+            if (resultBox.dataset.isSourceTimezone === 'true') {
+                // Keep the original time, just update the display in case friend label changed
+                const base = resultBox.dataset.baseLabel || resultBox.dataset.label || '';
+                const timePart = resultBox.dataset.originalTime || resultBox.dataset.timeText || '';
+                const friendLabel = resultBox.dataset.friendLabel || '';
+                this.renderTimezoneRow(resultBox, friendLabel, base, timePart);
                 return;
             }
 
@@ -432,16 +468,13 @@ class TextManager {
             const isLocal = resultBox.dataset.isLocal === 'true';
 
             // Calculate current time for this timezone
-            const utcTime = Date.UTC(
-                adjustedTime.getUTCFullYear(),
-                adjustedTime.getUTCMonth(),
-                adjustedTime.getUTCDate(),
-                adjustedTime.getUTCHours(),
-                adjustedTime.getUTCMinutes(),
-                adjustedTime.getUTCSeconds()
-            );
+            // Get UTC time in milliseconds, add timezone offset, then add hour offset
+            const utcTime = now.getTime();
+            const timezoneOffsetMs = offset * 3600000; // Convert hours to milliseconds
+            const hourOffsetMs = hourOffset * 3600000; // Convert hour offset to milliseconds
+            const zoneTime = new Date(utcTime + timezoneOffsetMs + hourOffsetMs);
 
-            const zoneTime = new Date(utcTime + (offset * 3600000));
+            // Get hours and minutes in UTC (which now represents the target timezone)
             const hours24 = zoneTime.getUTCHours();
             const minutes = zoneTime.getUTCMinutes();
 
@@ -563,13 +596,17 @@ class TextManager {
             input.style.transform = 'translateY(-120%)';
             input.style.left = '10px';
             input.style.fontFamily = 'var(--font-family-mono)';
-            input.style.fontSize = '12px';
-            input.style.padding = '2px 6px';
-            input.style.borderRadius = '8px';
-            input.style.border = '1px solid rgba(255,255,255,0.15)';
-            input.style.background = 'rgba(0,0,0,0.6)';
-            input.style.color = 'var(--text-primary)';
+            input.style.fontSize = '13px';
+            input.style.padding = '2px 5px';
+            input.style.borderRadius = '6px';
+            input.style.border = '2px solid #007acc';
+            input.style.background = '#000000ff';
+            input.style.color = '#ffffff';
             input.style.zIndex = '10002';
+            input.style.minWidth = '180px';
+            input.style.outline = 'none';
+            input.style.boxShadow = '0 6px 20px #000000, 0 0 0 1px #007acc';
+            input.style.caretColor = '#007acc';
             // Prevent bubbling that could retrigger handlers
             input.addEventListener('mousedown', e => e.stopPropagation());
             input.addEventListener('click', e => e.stopPropagation());

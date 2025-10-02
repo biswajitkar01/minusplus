@@ -140,7 +140,7 @@
     transform: translateY(0);
 }
 
-.calculation-result.leaving {
+.calculation.result.leaving {
     opacity: 0;
     transform: translateY(5px);
 }
@@ -237,137 +237,65 @@
     -webkit-user-select: none;
 }
 
-/* Inline editor for timezone friend label */
-.tz-label-input {
-    font-family: var(--font-family-mono);
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text-primary);
-    background: rgba(10, 10, 10, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 0.2em;
-    padding: 3px 8px;
-    outline: none;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    caret-color: var(--accent-blue);
+/* Timezone result positioning adjustments */
+.timezone-result {
+    /* Ensure proper positioning of timezone results */
+    position: relative;
+    z-index: var(--z-result);
 }
 
-.tz-label-input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+/* Timezone result entering animation */
+.timezone-result.entering {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
-.tz-label-input:focus {
-    border-color: rgba(0, 122, 204, 0.6);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 122, 204, 0.35), 0 0 0 2px rgba(0, 122, 204, 0.15);
-}
-
-@keyframes timezone-pulse {
-
-    0%,
-    100% {
-        opacity: 0.4;
-    }
-
-    50% {
-        opacity: 1;
-    }
-}
-
-/* Inline result overlays for mixed calculations (legacy - keep for now) */
-.inline-result-overlay {
-    position: absolute;
-    z-index: 1002;
-    pointer-events: none;
-    color: var(--accent-green);
-    font-weight: 500;
-    opacity: 0.8;
-    transition: opacity var(--transition-fast);
-    user-select: none;
-    -webkit-user-select: none;
-    white-space: nowrap;
-}
-
-.inline-result-overlay:hover {
+/* Timezone result visible state */
+.timezone-result.visible {
     opacity: 1;
+    transform: translateY(0);
 }
 
-/* Grid overlay styles */
-.canvas-grid {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    opacity: var(--grid-opacity, 0.05);
+/* Timezone result leaving animation */
+.timezone-result.leaving {
+    opacity: 0;
+    transform: translateY(10px);
 }
 
-/* Canvas element overlays */
-.canvas-element-overlay {
-    position: absolute;
-    pointer-events: none;
-    z-index: var(--z-overlay);
-    border-radius: var(--radius-sm);
-    transition: opacity var(--transition-fast);
+/* Canvas-specific scrollbar styles */
+#main-canvas::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-/* Modern text selection - VS Code style */
-::selection {
-    background: var(--selection-bg);
-    color: var(--selection-text);
+#main-canvas::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
 }
 
-::-moz-selection {
-    background: var(--selection-bg);
-    color: var(--selection-text);
+#main-canvas::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
 }
 
-/* Text input selection */
-.canvas-text-input::selection {
-    background: var(--selection-bg);
-    color: var(--selection-text);
+#main-canvas::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.6);
 }
 
-.canvas-text-input::-moz-selection {
-    background: var(--selection-bg);
-    color: var(--selection-text);
+/* Ensure scrollbars are always visible on canvas */
+#main-canvas {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
 }
 
-/* Highlight matches - subtle background only */
-.highlight-match {
-    background: var(--highlight-match);
-    /* border-radius: 2px; */
-    padding: 0;
+/* Canvas element selection - improve contrast */
+.canvas-element.selected {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 2px rgba(50, 205, 50, 0.3);
 }
 
-/* Unify new overlay highlight class */
-.mp-highlight-match {
-    background: var(--highlight-match);
-    /* border-radius: 2px; */
-    padding: 0;
-}
-
-/* Active (selected) text uses native ::selection with higher contrast */
-.highlight-match.active,
-.mp-highlight-match.active {
-    background: var(--highlight-match-active);
-    color: var(--selection-text);
-}
-
-/* Overlay element that mirrors textarea content for matches */
-.mp-text-highlight-overlay {
-    position: absolute;
-    pointer-events: none;
-    z-index: var(--z-overlay);
-    transform: translateZ(0);
-    will-change: left, top;
-    mix-blend-mode: normal;
-    transition: none;
+/* Development-only styles - highlight active elements */
+.canvas-debug .canvas-element.active {
+    outline: 2px solid var(--accent-orange);
 }
 
 /* Canvas performance optimizations */
