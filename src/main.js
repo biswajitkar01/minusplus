@@ -50,13 +50,13 @@ class MinusPlusApp {
         if (isMobile) {
             // Mobile: Single column layout
             const examples = [
-                { text: 'Hi There', position: { x: 150, y: 100 } },
-                { text: 'Just hit enter to add', position: { x: 150, y: 200 } },
-                { text: '200\n200', position: { x: 150, y: 350 } },
-                { text: 'Or space', position: { x: 150, y: 550 } },
-                { text: '200 200 200', position: { x: 150, y: 650 } },
-                { text: 'You can also try below phrase\n"Time + 2"\n"10:00 AM CST"', position: { x: 150, y: 850 } },
-                { text: 'Click on -+ button to know the shortcuts', position: { x: 150, y: 1050 } }
+                { text: 'Hi There', position: { x: 70, y: 100 } },
+                { text: 'Just hit enter to add', position: { x: 70, y: 150 } },
+                { text: '200\n200', position: { x: 70, y: 200 } },
+                { text: 'Or space', position: { x: 70, y: 330 } },
+                { text: '200 200 200', position: { x: 70, y: 380 } },
+                { text: 'time', position: { x: 70, y: 480 } },
+                { text: 'Click on -+ button to know \nthe shortcuts', position: { x: 70, y: 800 } }
             ];
 
             this.createTypingSequence(examples);
