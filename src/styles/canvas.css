@@ -526,3 +526,43 @@
         transition: opacity var(--transition-fast);
     }
 }
+
+/* Inline editor for timezone friend label */
+.tz-label-input {
+    font-family: var(--font-family-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    color: #ffffff;
+    background: #000000;
+    border: 2px solid #007acc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    outline: none;
+    box-shadow: 0 6px 20px #000000, 0 0 0 1px #007acc;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    caret-color: #007acc;
+    min-width: 180px;
+}
+
+.tz-label-input::placeholder {
+    color: #b4b4b4;
+}
+
+.tz-label-input:focus {
+    background: #1a1a1a;
+    border-color: #007acc;
+    box-shadow: 0 8px 24px #000000, 0 0 0 3px #007acc, 0 0 20px #007acc;
+}
+
+@keyframes timezone-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}

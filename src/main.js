@@ -11,6 +11,10 @@ import StorageManager from './utils/storage.js';
 class MinusPlusApp {
     constructor() {
         this.isDirty = false;
+        // Check if this is first visit
+        this.isFirstVisit = !localStorage.getItem('minusplus_visited');
+        this.welcomeShown = false;
+
         this.init();
     }
 
@@ -32,9 +36,137 @@ class MinusPlusApp {
             await this.loadPreviousState();
 
             console.log('MinusPlus Calculator initialized successfully');
+
+            // Don't auto-show example on first visit, wait for first click
+            // Welcome message already visible from HTML
         } catch (error) {
             console.error('Failed to initialize MinusPlus:', error);
         }
+    }
+
+    showWelcomeExample(clickEvent) {
+        const isMobile = window.innerWidth < 768;
+
+        if (isMobile) {
+            // Mobile: Single column layout
+            const examples = [
+                { text: 'Hi There', position: { x: 150, y: 100 } },
+                { text: 'Just hit enter to add', position: { x: 150, y: 200 } },
+                { text: '200\n200', position: { x: 150, y: 350 } },
+                { text: 'Or space', position: { x: 150, y: 550 } },
+                { text: '200 200 200', position: { x: 150, y: 650 } },
+                { text: 'You can also try below phrase\n"Time + 2"\n"10:00 AM CST"', position: { x: 150, y: 850 } },
+                { text: 'Click on -+ button to know the shortcuts', position: { x: 150, y: 1050 } }
+            ];
+
+            this.createTypingSequence(examples);
+        } else {
+            // Desktop: 3-column layout
+            const examples = [
+                // Column 1 - Basic intro
+                { text: 'Hi There', position: { x: 200, y: 80 } },
+                { text: 'Just hit enter to add', position: { x: 200, y: 150 } },
+                { text: '200\n200', position: { x: 200, y: 220 } },
+
+                // Column 2 - Space calculations
+                { text: 'Or space', position: { x: 600, y: 80 } },
+                { text: '200 200 200', position: { x: 600, y: 150 } },
+                { text: 'time', position: { x: 600, y: 300 } },
+
+
+                // Column 3 - Advanced features
+                { text: 'You can also try below phrase\n"Time + 2"\n"10:00 AM CST"', position: { x: 1000, y: 80 } },
+                { text: 'Click on -+ button to know the shortcuts', position: { x: 1000, y: 300 } }
+            ];
+
+            this.createTypingSequence(examples);
+        }
+
+        this.track('welcome_example', { method: 'default_set', layout: isMobile ? 'mobile' : 'desktop' });
+    }
+
+    createTypingSequence(examples) {
+        let currentDelay = 0;
+
+        examples.forEach((example, index) => {
+            // Stagger the start of each typing animation (Apple-style spacing)
+            setTimeout(() => {
+                this.typeText(example.text, example.position);
+            }, currentDelay);
+
+            // Calculate next delay: base delay + time for this text to type + pause
+            const typingTime = example.text.length * 45; // 45ms per character
+            const pauseTime = 800; // 800ms pause between examples
+            currentDelay += typingTime + pauseTime;
+        });
+    }
+
+    typeText(fullText, position) {
+        // Create the input element first
+        const element = this.textManager.createTextInput(position.x, position.y);
+        element.input.value = '';
+        element.input.focus();
+
+        let currentIndex = 0;
+        const typingSpeed = 45; // 45ms per character (Apple-like timing)
+
+        const typeNextChar = () => {
+            if (currentIndex < fullText.length) {
+                // Add next character
+                element.input.value = fullText.substring(0, currentIndex + 1);
+
+                // Auto-resize as we type
+                this.textManager.autoResize(element.input);
+
+                // Trigger calculation for numbers
+                if (this.shouldTriggerCalculation(element.input.value)) {
+                    this.textManager.handleInputChange(element.id);
+                }
+
+                currentIndex++;
+
+                // Variable timing for more natural feel
+                const nextDelay = this.getVariableTypingDelay(fullText[currentIndex - 1], typingSpeed);
+                setTimeout(typeNextChar, nextDelay);
+            } else {
+                // Typing complete - final processing
+                setTimeout(() => {
+                    this.textManager.handleInputChange(element.id);
+                    this.textManager.autoResize(element.input);
+
+                    // Blur with smooth transition
+                    setTimeout(() => {
+                        element.input.blur();
+                    }, 200);
+                }, 300);
+            }
+        };
+
+        // Start typing with a slight initial delay
+        setTimeout(typeNextChar, 150);
+    }
+
+    getVariableTypingDelay(char, baseSpeed) {
+        // Add natural variation to typing speed
+        const variation = Math.random() * 20 - 10; // ±10ms random variation
+
+        // Slightly longer pauses after punctuation and spaces
+        if (char === '.' || char === ',' || char === '!' || char === '?') {
+            return baseSpeed + 100 + variation;
+        }
+        if (char === ' ') {
+            return baseSpeed + 50 + variation;
+        }
+        if (char === '\n') {
+            return baseSpeed + 150 + variation;
+        }
+
+        return baseSpeed + variation;
+    }
+
+    shouldTriggerCalculation(text) {
+        // Only trigger calculation for numbers, not text labels
+        return /\d/.test(text) && (text.includes('\n') || text.includes(' ') || text === 'time');
     }
 
     setupEventHandlers() {
@@ -46,6 +178,15 @@ class MinusPlusApp {
 
         // Canvas click - create new calculation
         this.canvas.canvas.addEventListener('click', (e) => {
+            // If first visit and welcome is still showing, hide it and show example
+            if (this.isFirstVisit && !this.welcomeShown) {
+                this.hideHelpIndicator();
+                this.showWelcomeExample(e);
+                this.welcomeShown = true;
+                localStorage.setItem('minusplus_visited', 'true');
+                return; // Don't create normal input, just show example
+            }
+
             const rect = this.canvas.canvas.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
             const screenY = e.clientY - rect.top;
@@ -164,6 +305,16 @@ class MinusPlusApp {
 
                 // If it's a quick tap without movement, create text input
                 if (touchDuration < 300 && !hasMoved) {
+                    // If first visit and welcome is still showing, hide it and show example
+                    if (this.isFirstVisit && !this.welcomeShown) {
+                        this.hideHelpIndicator();
+                        this.showWelcomeExample(e.changedTouches[0]);
+                        this.welcomeShown = true;
+                        localStorage.setItem('minusplus_visited', 'true');
+                        e.preventDefault();
+                        return; // Don't create normal input, just show example
+                    }
+
                     const touch = e.changedTouches[0];
                     const rect = this.canvas.canvas.getBoundingClientRect();
                     const tapPos = {
