@@ -43,18 +43,35 @@ class TextManager {
         // Set initial size
         input.style.width = '120px';
         input.style.minHeight = '40px';
+        
+        // Create delete button for mobile
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'input-delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.removeElement(id);
+        };
 
         // Setup event listeners
         this.setupInputListeners(input, id, worldX, worldY);
 
         // Add to DOM and focus
         document.body.appendChild(input);
+        document.body.appendChild(deleteBtn);
         input.focus();
+        
+        // Show delete button immediately for new input on mobile
+        const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+        if (isMobile) {
+            deleteBtn.classList.add('active');
+        }
 
         // Store element data
         const element = {
             id: id,
             input: input,
+            deleteBtn: deleteBtn,
             worldX: worldX,
             worldY: worldY,
             calculation: null,
@@ -105,10 +122,31 @@ class TextManager {
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
+            
+            // Show delete button for this input
+            const element = this.textElements.get(id);
+            if (element && element.deleteBtn) {
+                // Hide all other delete buttons first
+                this.textElements.forEach((el) => {
+                    if (el.deleteBtn) {
+                        el.deleteBtn.classList.remove('active');
+                    }
+                });
+                // Show this one
+                element.deleteBtn.classList.add('active');
+            }
         });
 
         input.addEventListener('blur', () => {
             input.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            
+            // Hide delete button when input loses focus (with delay to allow clicking it)
+            const element = this.textElements.get(id);
+            if (element && element.deleteBtn) {
+                setTimeout(() => {
+                    element.deleteBtn.classList.remove('active');
+                }, 200);
+            }
 
             // Remove empty inputs immediately when they lose focus
             setTimeout(() => {
@@ -804,6 +842,13 @@ class TextManager {
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         element.input.style.left = screenPos.x + 'px';
         element.input.style.top = screenPos.y + 'px';
+        
+        // Update delete button position
+        if (element.deleteBtn) {
+            const inputWidth = element.input.offsetWidth || 120;
+            element.deleteBtn.style.left = (screenPos.x + inputWidth - 8) + 'px';
+            element.deleteBtn.style.top = (screenPos.y - 8) + 'px';
+        }
 
         // Update result position if visible - use actual rendered height, not scroll height
         if (element.resultElement && element.resultElement.style.display !== 'none') {
@@ -870,6 +915,10 @@ class TextManager {
         // Remove from DOM
         if (element.input.parentNode) {
             element.input.parentNode.removeChild(element.input);
+        }
+        
+        if (element.deleteBtn && element.deleteBtn.parentNode) {
+            element.deleteBtn.parentNode.removeChild(element.deleteBtn);
         }
 
         if (element.resultElement && element.resultElement.parentNode) {
