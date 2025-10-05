@@ -441,6 +441,41 @@ body {
     box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.35);
 }
 
+/* Delete button for mobile text inputs */
+.input-delete-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 68, 68, 0.95);
+    border: 2px solid rgba(26, 26, 26, 0.8);
+    color: white;
+    font-size: 18px;
+    font-weight: normal;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1002;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    padding-bottom: 2px;
+}
+
+.input-delete-btn:active {
+    transform: scale(0.9);
+}
+
+/* Show delete button only for focused input on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .input-delete-btn.active {
+        display: flex;
+    }
+}
+
 /* Text input styles */
 .canvas-text-input {
     background: transparent;
