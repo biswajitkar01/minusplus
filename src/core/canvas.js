@@ -20,6 +20,10 @@ class InfiniteCanvas {
         this.elements = new Map();
         this.isDirty = true;
         this.animationFrame = null;
+        
+        // Momentum scrolling variables
+        this.velocity = { x: 0, y: 0 };
+        this.momentumFrame = null;
 
         this.init();
     }
@@ -202,10 +206,64 @@ class InfiniteCanvas {
         });
     }
 
-    pan(deltaX, deltaY) {
-        this.viewport.x -= deltaX / this.viewport.zoom;
-        this.viewport.y -= deltaY / this.viewport.zoom;
+    pan(deltaX, deltaY, isMobile = false) {
+        // Different sensitivity for mobile vs desktop
+        const panMultiplier = isMobile ? 1.8 : 1.2;
+        this.viewport.x -= (deltaX * panMultiplier) / this.viewport.zoom;
+        this.viewport.y -= (deltaY * panMultiplier) / this.viewport.zoom;
+        
+        // Store velocity for momentum
+        this.velocity.x = (deltaX * panMultiplier) / this.viewport.zoom;
+        this.velocity.y = (deltaY * panMultiplier) / this.viewport.zoom;
+        
         this.isDirty = true;
+    }
+    
+    startMomentum(onTransformCallback) {
+        // Cancel any existing momentum animation
+        if (this.momentumFrame) {
+            cancelAnimationFrame(this.momentumFrame);
+        }
+        
+        const friction = 0.95; // Smoother deceleration for 120Hz
+        const minVelocity = 0.05; // Lower threshold for smoother stop
+        
+        const animate = () => {
+            // Apply velocity to viewport
+            if (Math.abs(this.velocity.x) > minVelocity || Math.abs(this.velocity.y) > minVelocity) {
+                this.viewport.x -= this.velocity.x;
+                this.viewport.y -= this.velocity.y;
+                
+                // Apply friction
+                this.velocity.x *= friction;
+                this.velocity.y *= friction;
+                
+                this.isDirty = true;
+                
+                // Update text element positions
+                if (onTransformCallback) {
+                    onTransformCallback();
+                }
+                
+                this.momentumFrame = requestAnimationFrame(animate);
+            } else {
+                // Stop momentum when velocity is too small
+                this.velocity.x = 0;
+                this.velocity.y = 0;
+                this.momentumFrame = null;
+            }
+        };
+        
+        this.momentumFrame = requestAnimationFrame(animate);
+    }
+    
+    stopMomentum() {
+        if (this.momentumFrame) {
+            cancelAnimationFrame(this.momentumFrame);
+            this.momentumFrame = null;
+        }
+        this.velocity.x = 0;
+        this.velocity.y = 0;
     }
 
     zoom(factor, centerX, centerY) {

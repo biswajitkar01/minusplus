@@ -176,28 +176,53 @@ class MinusPlusApp {
             if (vp) this.track('zoom', { zoom: Number(vp.zoom?.toFixed?.(3) || vp.zoom || 1) });
         }, 300);
 
-        // Canvas click - create new calculation
-        this.canvas.canvas.addEventListener('click', (e) => {
-            // If first visit and welcome is still showing, hide it and show example
-            if (this.isFirstVisit && !this.welcomeShown) {
-                this.hideHelpIndicator();
-                this.showWelcomeExample(e);
-                this.welcomeShown = true;
-                localStorage.setItem('minusplus_visited', 'true');
-                return; // Don't create normal input, just show example
+        // Mouse click vs drag detection
+        let mouseDownPos = null;
+        let mouseDownTime = 0;
+        let mouseHasMoved = false;
+        
+        this.canvas.canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Left click only
+                mouseDownPos = { x: e.clientX, y: e.clientY };
+                mouseDownTime = Date.now();
+                mouseHasMoved = false;
             }
+        });
+        
+        this.canvas.canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 0 && mouseDownPos) {
+                const moveDistance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownPos.x, 2) + 
+                    Math.pow(e.clientY - mouseDownPos.y, 2)
+                );
+                const clickDuration = Date.now() - mouseDownTime;
+                
+                // If it's a click (not a drag)
+                if (moveDistance < 5 && clickDuration < 200) {
+                    // If first visit and welcome is still showing, hide it and show example
+                    if (this.isFirstVisit && !this.welcomeShown) {
+                        this.hideHelpIndicator();
+                        this.showWelcomeExample(e);
+                        this.welcomeShown = true;
+                        localStorage.setItem('minusplus_visited', 'true');
+                        return;
+                    }
 
-            const rect = this.canvas.canvas.getBoundingClientRect();
-            const screenX = e.clientX - rect.left;
-            const screenY = e.clientY - rect.top;
-            const worldPos = this.canvas.screenToWorld(screenX, screenY);
+                    const rect = this.canvas.canvas.getBoundingClientRect();
+                    const screenX = e.clientX - rect.left;
+                    const screenY = e.clientY - rect.top;
+                    const worldPos = this.canvas.screenToWorld(screenX, screenY);
 
-            this.textManager.createTextInput(worldPos.x, worldPos.y);
-            this.hideHelpIndicator();
-            this.markDirty();
-            // Analytics
-            const vp = this.canvas.getViewport?.();
-            this.track('input_created', { method: 'click', zoom: vp?.zoom });
+                    this.textManager.createTextInput(worldPos.x, worldPos.y);
+                    this.hideHelpIndicator();
+                    this.markDirty();
+                    // Analytics
+                    const vp = this.canvas.getViewport?.();
+                    this.track('input_created', { method: 'click', zoom: vp?.zoom });
+                }
+                
+                mouseDownPos = null;
+            }
         });
 
         // Touch tap - create new calculation on mobile
@@ -213,6 +238,9 @@ class MinusPlusApp {
 
         this.canvas.canvas.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
+                // Stop any ongoing momentum when starting new touch
+                this.canvas.stopMomentum();
+                
                 touchStartTime = Date.now();
                 const touch = e.touches[0];
                 const rect = this.canvas.canvas.getBoundingClientRect();
@@ -248,30 +276,58 @@ class MinusPlusApp {
             }
         });
 
+        // Smooth dragging with RAF throttling
+        let dragFrame = null;
+        let lastTouchPos = null;
+        let currentTouchPos = null;
+        
         this.canvas.canvas.addEventListener('touchmove', (e) => {
             if (e.touches.length === 1 && !isPinching) {
+                e.preventDefault();
                 const touch = e.touches[0];
                 const rect = this.canvas.canvas.getBoundingClientRect();
-                const currentPos = {
+                
+                currentTouchPos = {
                     x: touch.clientX - rect.left,
                     y: touch.clientY - rect.top
                 };
-
-                const distance = Math.sqrt(
-                    Math.pow(currentPos.x - touchStartPos.x, 2) +
-                    Math.pow(currentPos.y - touchStartPos.y, 2)
-                );
-
-                if (distance > 10) {
-                    hasMoved = true;
-                    // Pan the canvas
-                    const deltaX = currentPos.x - touchStartPos.x;
-                    const deltaY = currentPos.y - touchStartPos.y;
-                    this.canvas.pan(deltaX, deltaY);
-                    touchStartPos = currentPos;
-                    this.textManager.onCanvasTransform();
+                
+                // Initialize last position on first move
+                if (!lastTouchPos) {
+                    lastTouchPos = { ...currentTouchPos };
+                    return;
                 }
-                e.preventDefault();
+                
+                // Calculate total distance moved from start
+                const totalDistance = Math.sqrt(
+                    Math.pow(currentTouchPos.x - touchStartPos.x, 2) +
+                    Math.pow(currentTouchPos.y - touchStartPos.y, 2)
+                );
+                
+                // Mark as moved if we've gone beyond minimal threshold
+                if (totalDistance > 3) {
+                    hasMoved = true;
+                }
+                
+                // Always update position for smooth dragging
+                if (!dragFrame) {
+                    dragFrame = requestAnimationFrame(() => {
+                        if (currentTouchPos && lastTouchPos) {
+                            // Calculate smooth delta
+                            const deltaX = currentTouchPos.x - lastTouchPos.x;
+                            const deltaY = currentTouchPos.y - lastTouchPos.y;
+                            
+                            // Apply pan only if there's actual movement
+                            if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
+                                this.canvas.pan(deltaX, deltaY, true); // true = mobile
+                                this.textManager.onCanvasTransform();
+                            }
+                            
+                            lastTouchPos = { ...currentTouchPos };
+                        }
+                        dragFrame = null;
+                    });
+                }
             } else if (e.touches.length === 2 && isPinching) {
                 // Handle pinch-to-zoom
                 const touch1 = e.touches[0];
@@ -300,8 +356,23 @@ class MinusPlusApp {
         }, { passive: false });
 
         this.canvas.canvas.addEventListener('touchend', (e) => {
+            // Cancel any pending drag frame and reset positions
+            if (dragFrame) {
+                cancelAnimationFrame(dragFrame);
+                dragFrame = null;
+            }
+            lastTouchPos = null;
+            currentTouchPos = null;
+            
             if (e.changedTouches.length === 1 && !isPinching) {
                 const touchDuration = Date.now() - touchStartTime;
+                
+                // Start momentum scrolling if user was panning
+                if (hasMoved) {
+                    this.canvas.startMomentum(() => {
+                        this.textManager.onCanvasTransform();
+                    });
+                }
 
                 // If it's a quick tap without movement, create text input
                 if (touchDuration < 300 && !hasMoved) {
@@ -351,53 +422,96 @@ class MinusPlusApp {
             this.trackZoomDebounced();
         });
 
-        // Mouse drag - pan (Ctrl+click)
+        // Mouse drag - simple click and drag panning
         let isDragging = false;
-        let lastPos = { x: 0, y: 0 };
+        let lastMousePos = null;
+        let currentMousePos = null;
+        let mouseDragFrame = null;
         let panDistance = 0;
-
-        // Touch support variables
-        let isTouchDragging = false;
-        let touchLastPos = { x: 0, y: 0 };
+        let dragStartPos = null;
 
         this.canvas.canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 0 && e.ctrlKey) {
-                isDragging = true;
-                lastPos = { x: e.clientX, y: e.clientY };
+            if (e.button === 0) { // Left click
+                // Stop any momentum when starting new drag
+                this.canvas.stopMomentum();
+                
+                dragStartPos = { x: e.clientX, y: e.clientY };
+                currentMousePos = { x: e.clientX, y: e.clientY };
+                lastMousePos = { ...currentMousePos };
                 panDistance = 0;
                 e.preventDefault();
-                this.canvas.canvas.style.cursor = 'grab';
             }
         });
 
         document.addEventListener('mousemove', (e) => {
+            if (dragStartPos && !isDragging) {
+                // Check if we've moved enough to start dragging
+                const moveDistance = Math.sqrt(
+                    Math.pow(e.clientX - dragStartPos.x, 2) + 
+                    Math.pow(e.clientY - dragStartPos.y, 2)
+                );
+                
+                if (moveDistance > 5) {
+                    isDragging = true;
+                    mouseHasMoved = true;
+                    this.canvas.canvas.style.cursor = 'grabbing';
+                }
+            }
+            
             if (isDragging) {
-                const deltaX = e.clientX - lastPos.x;
-                const deltaY = e.clientY - lastPos.y;
-                this.canvas.pan(deltaX, deltaY);
-                lastPos = { x: e.clientX, y: e.clientY };
-
-                // Accumulate pan distance for analytics
-                panDistance += Math.hypot(deltaX, deltaY);
-
-                // Show grabbing cursor while dragging
-                this.canvas.canvas.style.cursor = 'grabbing';
-
-                // Update text element positions after pan
-                this.textManager.onCanvasTransform();
+                currentMousePos = { x: e.clientX, y: e.clientY };
+                
+                // Use RAF for smooth updates
+                if (!mouseDragFrame) {
+                    mouseDragFrame = requestAnimationFrame(() => {
+                        if (currentMousePos && lastMousePos) {
+                            const deltaX = currentMousePos.x - lastMousePos.x;
+                            const deltaY = currentMousePos.y - lastMousePos.y;
+                            
+                            // Apply pan only if there's actual movement
+                            if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
+                                this.canvas.pan(deltaX, deltaY, false); // false = desktop
+                                this.textManager.onCanvasTransform();
+                                
+                                // Accumulate pan distance
+                                panDistance += Math.hypot(deltaX, deltaY);
+                            }
+                            
+                            lastMousePos = { ...currentMousePos };
+                        }
+                        mouseDragFrame = null;
+                    });
+                }
             }
         });
 
         document.addEventListener('mouseup', () => {
             if (isDragging) {
+                // Cancel any pending frame
+                if (mouseDragFrame) {
+                    cancelAnimationFrame(mouseDragFrame);
+                    mouseDragFrame = null;
+                }
+                
                 isDragging = false;
                 this.canvas.canvas.style.cursor = 'crosshair';
+                
+                // Start momentum scrolling
+                this.canvas.startMomentum(() => {
+                    this.textManager.onCanvasTransform();
+                });
+                
                 // Track pan once when drag ends
                 if (panDistance > 0) {
                     this.track('pan', { distance: Math.round(panDistance) });
                     panDistance = 0;
                 }
             }
+            
+            // Reset all mouse tracking
+            dragStartPos = null;
+            lastMousePos = null;
+            currentMousePos = null;
         });
 
         // Prevent context menu on right click
@@ -488,6 +602,9 @@ class MinusPlusApp {
 
         // Clear all button functionality
         this.setupClearAllButton();
+        
+        // Recenter button functionality
+        this.setupRecenterButton();
     }
 
     setupHelpIndicator() {
@@ -495,6 +612,7 @@ class MinusPlusApp {
         this.shortcutsButton = document.querySelector('#shortcuts-btn');
         this.shortcutsPopup = document.querySelector('#shortcuts-popup');
         this.clearAllButton = document.querySelector('#clear-all-btn');
+        this.recenterButton = document.querySelector('#recenter-btn');
 
         console.log('Elements found in setupHelpIndicator:');
         console.log('- Help indicator:', !!this.helpIndicator);
@@ -514,6 +632,9 @@ class MinusPlusApp {
                 }
                 if (this.clearAllButton) {
                     this.clearAllButton.classList.remove('visible');
+                }
+                if (this.recenterButton) {
+                    this.recenterButton.classList.remove('visible');
                 }
             } else {
                 // Hide help and show action buttons if we have elements
@@ -560,6 +681,23 @@ class MinusPlusApp {
         });
     }
 
+    setupRecenterButton() {
+        if (!this.recenterButton) return;
+        
+        // Show button when canvas has content
+        if (this.textManager.textElements.size > 0) {
+            this.recenterButton.classList.add('visible');
+        }
+        
+        this.recenterButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.canvas.resetView();
+            this.textManager.onCanvasTransform?.();
+            this.highlighter.updateHighlightPositions?.();
+            this.track('reset_view', { source: 'button' });
+        });
+    }
+    
     setupClearAllButton() {
         console.log('Setting up clear all button...');
 
@@ -673,6 +811,9 @@ class MinusPlusApp {
             }
             if (this.clearAllButton) {
                 this.clearAllButton.classList.add('visible');
+            }
+            if (this.recenterButton) {
+                this.recenterButton.classList.add('visible');
             }
 
             setTimeout(() => {

@@ -126,7 +126,7 @@ body {
 
 /* UI Overlay */
 #ui-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -169,6 +169,53 @@ body {
     gap: var(--spacing-xs);
     font-size: var(--font-size-sm);
     color: var(--text-muted);
+}
+
+/* Recenter button - like Google Maps */
+.recenter-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(45, 45, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    cursor: pointer;
+    z-index: 9998;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    opacity: 0;
+    visibility: hidden;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+}
+
+.recenter-button.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.recenter-button:hover {
+    background: rgba(58, 58, 58, 0.9);
+    transform: scale(1.1);
+}
+
+.recenter-button:active {
+    transform: scale(0.95);
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .recenter-button {
+        bottom: 80px !important;
+        right: 20px !important;
+    }
 }
 
 /* Floating shortcuts button */
