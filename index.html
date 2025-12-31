@@ -33,11 +33,11 @@
         content="Do math anywhere on an infinite canvas. Type numbers, hit space/enter to auto‑sum columns and rows. Super fast, privacy‑friendly, works offline.">
     <meta property="og:url" content="https://minusplus.app/">
     <!-- Use a large, clean PNG for search result thumbnail & shares -->
-    <meta property="og:image" content="https://minusplus.app/src/assets/minusplus.png">
+    <meta property="og:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
     <meta property="og:image:alt"
         content="MinusPlus App Logo - A red minus sign and a green plus sign on a dark grid background, representing a modern calculator app.">
-    <meta property="og:image:width" content="512">
-    <meta property="og:image:height" content="512">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="MinusPlus">
     <meta property="og:locale" content="en_US" />
 
@@ -49,6 +49,8 @@
     <meta name="twitter:image" content="https://minusplus.app/src/assets/minusplus.png">
     <meta name="twitter:image:alt"
         content="MinusPlus App Logo - A modern, fast calculator app with an infinite canvas.">
+    <meta name="twitter:site" content="@minusplus_app">
+    <meta name="twitter:creator" content="@minusplus_app">
     <meta name="author" content="MinusPlus Calculator App">
     <meta name="copyright" content="MinusPlus Calculator">
     <meta name="brand" content="MinusPlus">
@@ -142,8 +144,40 @@
                     "description": "Fast infinite canvas calculator app for mathematical calculations"
                 },
                 {
+                    "@type": "HowTo",
+                    "name": "How to Add Numbers on MinusPlus",
+                    "description": "Learn how to quickly add numbers using the MinusPlus infinite canvas calculator.",
+                    "step": [
+                        {
+                            "@type": "HowToStep",
+                            "position": 1,
+                            "name": "Open MinusPlus",
+                            "text": "Go to minusplus.app in your browser. No installation needed."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 2,
+                            "name": "Click anywhere on the canvas",
+                            "text": "Click anywhere on the dark infinite canvas to start a new calculation box."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 3,
+                            "name": "Type your numbers",
+                            "text": "Type numbers separated by spaces for horizontal addition, or press Enter for vertical column sums."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 4,
+                            "name": "See instant results",
+                            "text": "The sum appears automatically as you type. No equals button needed."
+                        }
+                    ]
+                },
+                {
                     "@type": "FAQPage",
-                    "mainEntity": [{
+                    "mainEntity": [
+                        {
                             "@type": "Question",
                             "name": "How do I add numbers?",
                             "acceptedAnswer": {
@@ -157,6 +191,46 @@
                             "acceptedAnswer": {
                                 "@type": "Answer",
                                 "text": "Yes. It stores everything locally in your browser and works without an internet connection."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "What is an infinite canvas calculator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "An infinite canvas calculator lets you place calculations anywhere on an unlimited workspace. You can pan, zoom, and organize multiple calculations spatially, unlike traditional calculators with a single display."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "How to add a column of numbers quickly?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Click on the canvas, type your first number, press Enter, type the next number, and repeat. MinusPlus automatically sums the column as you type."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "What is the fastest online calculator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "MinusPlus is designed to be the fastest online calculator. It loads in under 200ms, renders at 60fps, and calculates results instantly as you type."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Is MinusPlus free?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes, MinusPlus is completely free. No sign-up, no ads, no hidden costs. Just open minusplus.app and start calculating."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can I use MinusPlus for accounting calculations?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. MinusPlus supports accounting formats including parentheses for negative numbers like (500) and SAP trailing minus format like 900-."
                             }
                         }
                     ]
@@ -307,7 +381,7 @@
     <script type="module" src="src/main.js"></script>
 
     <!-- Accessible SEO content (kept visually hidden; improves discoverability) -->
-    <section class="visually-hidden" data-nosnippet>
+    <section class="visually-hidden">
         <h1>MinusPlus App: The Ultimate Online Calculator</h1>
         <p>Discover the MinusPlus app, the fastest and most intuitive minus plus calculator and plus minus calculator
             available. Designed for professionals and students alike, our web calculator offers an infinite canvas for
