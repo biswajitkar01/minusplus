@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Canvas Calculator - Unlimited Space for Math | MinusPlus</title>
+    <meta name="description"
+        content="The world's first infinite canvas calculator. Pan, zoom, and organize unlimited calculations spatially. Free, fast, works offline.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://minusplus.app/calculators/infinite-canvas">
+    <meta name="keywords"
+        content="infinite canvas calculator, unlimited calculator, canvas calculator, spatial calculator, visual calculator, math canvas">
+
+    <!-- App icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../src/assets/apple-touch-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="../src/assets/favicon.svg">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Infinite Canvas Calculator | MinusPlus">
+    <meta property="og:description"
+        content="The world's first infinite canvas calculator. Unlimited space for all your calculations.">
+    <meta property="og:url" content="https://minusplus.app/calculators/infinite-canvas">
+    <meta property="og:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="MinusPlus">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@minusplus_app">
+    <meta name="twitter:title" content="Infinite Canvas Calculator | MinusPlus">
+    <meta name="twitter:description" content="Unlimited space for calculations. Pan, zoom, organize freely.">
+    <meta name="twitter:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "WebPage",
+                    "url": "https://minusplus.app/calculators/infinite-canvas",
+                    "name": "Infinite Canvas Calculator - Unlimited Space for Math",
+                    "description": "The world's first infinite canvas calculator with unlimited workspace.",
+                    "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "MinusPlus",
+                        "url": "https://minusplus.app/"
+                    }
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "What is an infinite canvas calculator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "An infinite canvas calculator provides unlimited workspace where you can place calculations anywhere. Unlike traditional calculators with a single display, you can pan and zoom across an endless canvas, organizing multiple calculations spatially like a digital whiteboard for math."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Why use a canvas instead of a regular calculator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "A canvas lets you keep all your calculations visible at once, organize them by project or category, and think visually. It's like having unlimited sticky notes for math that never run out of space."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Is MinusPlus the first infinite canvas calculator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes, MinusPlus pioneered the concept of an infinite canvas calculator - combining the simplicity of a calculator with the spatial freedom of an infinite canvas like Figma or Miro, but for math."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../src/styles/main.css">
+    <link rel="stylesheet" href="../src/styles/about.css">
+</head>
+
+<body>
+    <canvas id="about-canvas" aria-hidden="true"></canvas>
+
+    <main class="about-container">
+        <header class="about-hero">
+            <h1>
+                <span class="brand">Infinite Canvas Calculator</span>
+                <span class="mark-minus">−</span>
+                <span class="mark-plus">+</span>
+            </h1>
+            <p class="subtitle">The world's first calculator with unlimited space. Pan, zoom, calculate anywhere.</p>
+            <div class="hero-ctas">
+                <a class="btn btn-primary" href="/">Open Calculator</a>
+                <a class="btn btn-ghost" href="/about">Learn More</a>
+            </div>
+        </header>
+
+        <section class="card">
+            <h2>What Makes an Infinite Canvas Different?</h2>
+            <div class="grid-features">
+                <div class="feature">
+                    <div class="glyph plus">∞</div>
+                    <h3>Unlimited Space</h3>
+                    <p>Never run out of room. The canvas extends infinitely in all directions.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">🔍</div>
+                    <h3>Pan & Zoom</h3>
+                    <p>Navigate your calculations like a digital whiteboard. Zoom for detail or overview.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">📍</div>
+                    <h3>Spatial Organization</h3>
+                    <p>Place calculations anywhere. Group by project, client, or category.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">👁️</div>
+                    <h3>All Visible</h3>
+                    <p>See all your work at once. No history menus or scrolling through results.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Inspired By Tools You Love</h2>
+            <p>MinusPlus brings the infinite canvas concept from creative tools like Figma, Miro, and FigJam to the world of calculations. If you've ever wished you could organize your math spatially instead of linearly, this is for you.</p>
+        </section>
+
+        <section class="card">
+            <h2>Perfect For</h2>
+            <ul class="feature-list">
+                <li><strong>Project Planning:</strong> Multiple budget calculations organized by project.</li> 
+                <li><strong>Comparison Shopping:</strong> Side-by-side price calculations.</li>
+                <li><strong>Financial Analysis:</strong> Different scenarios visible together.</li>
+                <li><strong>Teaching & Learning:</strong> Visual math explanations.</li>
+            </ul>
+        </section>
+
+        <footer class="about-footer">
+            <a class="btn btn-primary" href="/">Experience the Canvas</a>
+            <a class="btn btn-ghost" href="/about">About MinusPlus</a>
+        </footer>
+    </main>
+
+    <script type="module" src="../src/about.js"></script>
+</body>
+
+</html>

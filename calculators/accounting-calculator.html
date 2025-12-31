@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting Calculator with Parentheses | MinusPlus</title>
+    <meta name="description"
+        content="Free accounting calculator supporting parentheses for negatives (500), SAP trailing minus 900-, and currency formats. Perfect for accountants and bookkeepers.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://minusplus.app/calculators/accounting-calculator">
+    <meta name="keywords"
+        content="accounting calculator, calculator with parentheses, SAP minus format, negative number calculator, bookkeeping calculator, financial calculator">
+
+    <!-- App icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../src/assets/apple-touch-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="../src/assets/favicon.svg">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Accounting Calculator with Parentheses | MinusPlus">
+    <meta property="og:description"
+        content="Supports (500) for negatives, SAP trailing minus, and currency formats.">
+    <meta property="og:url" content="https://minusplus.app/calculators/accounting-calculator">
+    <meta property="og:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="MinusPlus">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@minusplus_app">
+    <meta name="twitter:title" content="Accounting Calculator | MinusPlus">
+    <meta name="twitter:description" content="Supports parentheses negatives, SAP format, and currencies.">
+    <meta name="twitter:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "WebPage",
+                    "url": "https://minusplus.app/calculators/accounting-calculator",
+                    "name": "Accounting Calculator with Parentheses",
+                    "description": "Calculator supporting accounting number formats including parentheses for negatives.",
+                    "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "MinusPlus",
+                        "url": "https://minusplus.app/"
+                    }
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "How do I enter negative numbers in accounting format?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "MinusPlus understands accounting parentheses notation. Type (500) and it will be treated as -500. You can also use SAP trailing minus format like 900- which becomes -900."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Does MinusPlus support currency symbols?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. You can type numbers with currency symbols like $100 or €50 and MinusPlus will calculate them correctly."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can accountants use MinusPlus for quick calculations?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Absolutely. MinusPlus is designed for professionals who need quick, accurate calculations with accounting number formats. It's faster than Excel for simple sums."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../src/styles/main.css">
+    <link rel="stylesheet" href="../src/styles/about.css">
+</head>
+
+<body>
+    <canvas id="about-canvas" aria-hidden="true"></canvas>
+
+    <main class="about-container">
+        <header class="about-hero">
+            <h1>
+                <span class="brand">Accounting Calculator</span>
+                <span class="mark-minus">−</span>
+                <span class="mark-plus">+</span>
+            </h1>
+            <p class="subtitle">Supports parentheses (500), SAP trailing minus 900-, and currency formats.</p>
+            <div class="hero-ctas">
+                <a class="btn btn-primary" href="/">Open Calculator</a>
+                <a class="btn btn-ghost" href="/about">Learn More</a>
+            </div>
+        </header>
+
+        <section class="card">
+            <h2>Accounting Number Formats Supported</h2>
+            <div class="grid-features">
+                <div class="feature">
+                    <div class="glyph minus">()</div>
+                    <h3>Parentheses Negatives</h3>
+                    <p>Type (500) and it's calculated as -500. Standard accounting notation.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph minus">-</div>
+                    <h3>SAP Trailing Minus</h3>
+                    <p>Type 900- and it becomes -900. Perfect for SAP users.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">$</div>
+                    <h3>Currency Symbols</h3>
+                    <p>Enter $100, €50, ₹1000 - currencies are handled automatically.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">,</div>
+                    <h3>Thousand Separators</h3>
+                    <p>Type 1,000,000 and it's parsed correctly.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Built for Accounting Professionals</h2>
+            <ul class="feature-list">
+                <li><strong>No Formulas:</strong> Just type numbers and get sums instantly.</li>
+                <li><strong>Infinite Workspace:</strong> Multiple calculation areas for different accounts.</li>
+                <li><strong>Privacy First:</strong> Data stays in your browser. No cloud uploads.</li>
+                <li><strong>Works Offline:</strong> Calculate during flights or poor connectivity.</li>
+            </ul>
+        </section>
+
+        <footer class="about-footer">
+            <a class="btn btn-primary" href="/">Start Calculating</a>
+            <a class="btn btn-ghost" href="/about">About MinusPlus</a>
+        </footer>
+    </main>
+
+    <script type="module" src="../src/about.js"></script>
+</body>
+
+</html>
