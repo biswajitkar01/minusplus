@@ -2,13 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://minusplus.app/</loc>
-        <lastmod>2025-12-31</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
+        <loc>https://minusplus.app/calculators/</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
         <loc>https://minusplus.app/about</loc>
-        <lastmod>2025-12-31</lastmod>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -27,6 +33,36 @@
     <url>
         <loc>https://minusplus.app/calculators/infinite-canvas</loc>
         <lastmod>2025-12-31</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://minusplus.app/calculators/plus-minus</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://minusplus.app/calculators/minus-plus</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://minusplus.app/calculators/online-calculator</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://minusplus.app/calculators/time-zone-calculator</loc>
+        <lastmod>2026-01-15</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://minusplus.app/calculators/sap-calculator</loc>
+        <lastmod>2026-01-15</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
