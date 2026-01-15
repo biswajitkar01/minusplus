@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Zone Calculator | Team Time Converter with Labels | MinusPlus</title>
+    <meta name="description"
+        content="Free time zone calculator with team labels. Convert time between zones, label them as 'Manager (CST)', 'Friend (PST)'. Perfect for remote teams and global collaboration.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://minusplus.app/calculators/time-zone-calculator">
+    <meta name="keywords"
+        content="time zone calculator, time converter, time zone converter, team time zones, world clock, time difference calculator, CST to PST, time zone labels">
+
+    <!-- App icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../src/assets/apple-touch-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="../src/assets/favicon.svg">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Time Zone Calculator with Team Labels | MinusPlus">
+    <meta property="og:description" content="Label time zones by person: 'Manager (CST)', 'Client (GMT)'. Perfect for remote teams.">
+    <meta property="og:url" content="https://minusplus.app/calculators/time-zone-calculator">
+    <meta property="og:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="MinusPlus">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@minusplus_app">
+    <meta name="twitter:title" content="Time Zone Calculator | MinusPlus">
+    <meta name="twitter:description" content="Label time zones by team member. Perfect for remote work.">
+    <meta name="twitter:image" content="https://minusplus.app/src/assets/og-image-1200x630.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "WebPage",
+                    "url": "https://minusplus.app/calculators/time-zone-calculator",
+                    "name": "Time Zone Calculator with Team Labels",
+                    "description": "Free time zone calculator with custom labels for team members.",
+                    "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "MinusPlus",
+                        "url": "https://minusplus.app/"
+                    }
+                },
+                {
+                    "@type": "HowTo",
+                    "name": "How to Use the Time Zone Calculator",
+                    "description": "Learn how to set up time zones with custom labels for your team.",
+                    "step": [
+                        {
+                            "@type": "HowToStep",
+                            "position": 1,
+                            "name": "Open MinusPlus",
+                            "text": "Visit minusplus.app and click anywhere to create a calculation box."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 2,
+                            "name": "Add time zones",
+                            "text": "Type your time zones like CST, PST, GMT, IST."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 3,
+                            "name": "Label with names",
+                            "text": "Add custom labels like 'Manager (CST)' or 'Friend One (PST)' to remember who's where."
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "position": 4,
+                            "name": "See time differences",
+                            "text": "MinusPlus shows the current time in each zone and the difference between them."
+                        }
+                    ]
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "How do I label time zones with team member names?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "In MinusPlus, you can add custom labels to each time zone. For example, type 'Manager - CST' or 'Client Meeting - GMT+5:30'. These labels help you remember which time zone belongs to which person or event."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can I convert time between multiple zones at once?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes! MinusPlus's infinite canvas lets you display multiple time zones simultaneously. Set up CST, PST, EST, GMT, IST all on one screen and see them update in real-time."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "What's the best tool for remote team time zones?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "MinusPlus is ideal for remote teams. Unlike basic world clocks, you can label each time zone with your teammate's name, making it easy to know when your manager, client, or colleague is available."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Does the time zone calculator work offline?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. Once you've set up your time zones in MinusPlus, they're saved locally. The calculator works even without internet connection."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../src/styles/main.css">
+    <link rel="stylesheet" href="../src/styles/about.css">
+</head>
+
+<body>
+    <canvas id="about-canvas" aria-hidden="true"></canvas>
+
+    <main class="about-container">
+        <header class="about-hero">
+            <h1>
+                <span class="brand">Time Zone Calculator</span>
+                <span class="mark-minus">−</span>
+                <span class="mark-plus">+</span>
+            </h1>
+            <p class="subtitle">Label time zones by person. "Manager (CST)", "Friend One (PST)" — perfect for remote teams.</p>
+            <div class="hero-ctas">
+                <a class="btn btn-primary" href="/">Open Time Calculator</a>
+            </div>
+        </header>
+
+        <section class="card">
+            <h2>Why Use MinusPlus for Time Zones?</h2>
+            <div class="grid-features">
+                <div class="feature">
+                    <div class="glyph plus">🏷️</div>
+                    <h3>Custom Labels</h3>
+                    <p>Label each zone: "Manager", "Client", "Friend One", "Team Lead".</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">🌍</div>
+                    <h3>Multiple Zones</h3>
+                    <p>See CST, PST, GMT, IST all at once on the infinite canvas.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">⏱️</div>
+                    <h3>Live Updates</h3>
+                    <p>Times update in real-time. Always know what time it is for your team.</p>
+                </div>
+                <div class="feature">
+                    <div class="glyph plus">💾</div>
+                    <h3>Saves Locally</h3>
+                    <p>Your time zone setup is saved. Open MinusPlus and it's all there.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Perfect For</h2>
+            <ul class="feature-list">
+                <li><strong>Remote Teams:</strong> Know when everyone is online</li>
+                <li><strong>Freelancers:</strong> Track client time zones across the globe</li>
+                <li><strong>International Friends:</strong> Never wake someone up at 3am again</li>
+                <li><strong>Meeting Planning:</strong> Find the best time that works for all</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Example Setup</h2>
+            <p>Create labels like:</p>
+            <ul class="feature-list">
+                <li>📍 <strong>Manager</strong> — CST (Chicago)</li>
+                <li>📍 <strong>Designer</strong> — PST (Los Angeles)</li>
+                <li>📍 <strong>Client</strong> — GMT (London)</li>
+                <li>📍 <strong>Developer</strong> — IST (India)</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Related Searches</h2>
+            <p>time zone calculator, time converter, world clock with labels, team time zones, CST to PST converter, time difference calculator, remote team clock, international time converter</p>
+        </section>
+
+        <footer class="about-footer">
+            <a class="btn btn-primary" href="/">Set Up Your Time Zones</a>
+        </footer>
+    </main>
+
+    <script type="module" src="../src/about.js"></script>
+</body>
+
+</html>
