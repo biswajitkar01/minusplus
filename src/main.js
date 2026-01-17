@@ -378,7 +378,7 @@ class MinusPlusApp {
                 if (hasMoved) {
                     this.canvas.startMomentum(() => {
                         this.textManager.onCanvasTransform();
-                    });
+                    }, true); // isMobile = true
                 }
 
                 // If it's a quick tap without movement, create text input
@@ -506,7 +506,7 @@ class MinusPlusApp {
                 // Start momentum scrolling
                 this.canvas.startMomentum(() => {
                     this.textManager.onCanvasTransform();
-                });
+                }, false); // isMobile = false
 
                 // Track pan once when drag ends
                 if (panDistance > 0) {
