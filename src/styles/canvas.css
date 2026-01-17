@@ -52,51 +52,19 @@
     transition: none;
 }
 
-/* Hide scrollbars by default */
+/* Hide scrollbars but allow scrolling */
 .canvas-text-input::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
 }
 
-/* Show thin scrollbars when focused */
-.canvas-text-input:focus::-webkit-scrollbar {
-    display: block;
-    width: 6px;
-    height: 6px;
-}
-
-.canvas-text-input:focus::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-}
-
-.canvas-text-input:focus::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 3px;
-}
-
-.canvas-text-input:focus::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.6);
-}
-
-/* Ensure both horizontal and vertical scrollbars work */
-.canvas-text-input:focus::-webkit-scrollbar-corner {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Additional scrollbar hiding for better browser support */
+/* Hide scrollbars in all browsers */
 .canvas-text-input {
-    /* Hide scrollbars in Firefox by default */
+    /* Hide scrollbars in Firefox */
     scrollbar-width: none;
-    /* Hide scrollbars in IE/Edge by default */
+    /* Hide scrollbars in IE/Edge */
     -ms-overflow-style: none;
-}
-
-/* Show thin scrollbars in Firefox when focused */
-.canvas-text-input:focus {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
 }
 
 /* Text input states on canvas */

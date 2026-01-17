@@ -854,7 +854,7 @@ class TextManager {
             textarea.style.height = newHeight + 'px';
 
             textarea.style.overflowX = 'hidden';
-            textarea.style.overflowY = scrollHeight > maxHeight ? 'scroll' : 'hidden';
+            textarea.style.overflowY = 'auto'; // Always allow scroll, scrollbar hidden via CSS
         }
     }
 
