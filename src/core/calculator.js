@@ -27,7 +27,12 @@ class CalculationEngine {
             return null;
         }
 
-        const cleanText = text.trim();
+        // Remove quoted comments (e.g., "Note: 123") to prevent calculation
+        // but preserve the structure if needed. 
+        // We replace with spaces to ensure word boundaries are kept.
+        const textWithoutComments = text.replace(/"[^"]*"/g, match => ' '.repeat(match.length));
+
+        const cleanText = textWithoutComments.trim();
 
         // Check for specific time with timezone (e.g., "10:30 PM MST" or "10:30 PM MST + 2")
         const specificTimeMatch = cleanText.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)\s+(PST|MST|CST|EST|UTC|IST)\s*([-+]\s*\d+)?$/i);
@@ -48,8 +53,10 @@ class CalculationEngine {
         }
 
         // Detect calculation type - prioritize mixed calculations
-        if (cleanText.includes('\n')) {
-            return this.calculateMixed(cleanText);
+        // Use text.trim().includes('\n') to detect if original input has multiple lines
+        // We pass textWithoutComments (UNTRIMMED) to calculateMixed to preserve line indices
+        if (text.trim().includes('\n')) {
+            return this.calculateMixed(textWithoutComments);
         } else if (cleanText.includes(' ') || /[-+×*÷\/]/.test(cleanText)) {
             // Check for spaces OR mathematical operators
             return this.calculateHorizontalSequence(cleanText);
