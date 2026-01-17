@@ -1,0 +1,29 @@
+/* Syntax Highlighting - Modern Dark Theme */
+
+.syntax-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    color: #f8fafc; /* Crisp white for numbers */
+    background: transparent;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Make the input text transparent so overlay shows through */
+.canvas-text-input.syntax-active {
+    color: transparent;
+    caret-color: #38bdf8; /* Cyan caret */
+}
+
+/* Hashtags - Vibrant cyan/teal */
+.syntax-hashtag {
+    color: #22d3ee;
+    font-weight: 500;
+}
+
+/* Quoted comments - Soft orange/amber */
+.syntax-comment {
+    color: #fbbf24;
+    font-style: italic;
+}

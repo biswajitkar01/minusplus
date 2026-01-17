@@ -2,9 +2,10 @@
 // Handles text inputs, auto-calculation, and real-time updates
 
 class TextManager {
-    constructor(canvas, calculator) {
+    constructor(canvas, calculator, syntaxHighlighter) {
         this.canvas = canvas;
         this.calculator = calculator;
+        this.syntaxHighlighter = syntaxHighlighter;
         this.activeInput = null;
         this.textElements = new Map();
         this.elementIdCounter = 0;
@@ -43,7 +44,7 @@ class TextManager {
         // Set initial size
         input.style.width = '120px';
         input.style.minHeight = '40px';
-        
+
         // Create delete button for mobile
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'input-delete-btn';
@@ -60,7 +61,7 @@ class TextManager {
         document.body.appendChild(input);
         document.body.appendChild(deleteBtn);
         input.focus();
-        
+
         // Show delete button immediately for new input on mobile
         const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
         if (isMobile) {
@@ -89,6 +90,12 @@ class TextManager {
             window.canvasApp.hideHelpIndicator();
         }
 
+        // Attach syntax highlighter
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.attach(input, id);
+            input.classList.add('syntax-active');
+        }
+
         return element;
     }
 
@@ -96,6 +103,12 @@ class TextManager {
         // Input change handler with debouncing
         let inputTimeout;
         input.addEventListener('input', (e) => {
+            // Sync syntax highlighting IMMEDIATELY for instant color feedback
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(id);
+            }
+
+            // Debounce the heavy calculation logic
             clearTimeout(inputTimeout);
             inputTimeout = setTimeout(() => {
                 this.handleInputChange(id);
@@ -118,11 +131,18 @@ class TextManager {
             }, 10);
         });
 
+        // Scroll handler - sync syntax overlay scroll position
+        input.addEventListener('scroll', () => {
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(id);
+            }
+        });
+
         // Focus handlers
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
-            
+
             // Show delete button for this input
             const element = this.textElements.get(id);
             if (element && element.deleteBtn) {
@@ -139,7 +159,7 @@ class TextManager {
 
         input.addEventListener('blur', () => {
             input.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            
+
             // Hide delete button when input loses focus (with delay to allow clicking it)
             const element = this.textElements.get(id);
             if (element && element.deleteBtn) {
@@ -164,6 +184,23 @@ class TextManager {
                 // Ctrl+Enter (or Cmd+Enter on Mac) creates a new input box
                 e.preventDefault();
                 this.createAdjacentInput(worldX, worldY + 60);
+            } else if (e.key === '/' && (e.ctrlKey || e.metaKey)) {
+                // Ctrl+/ or Cmd+/ toggles comment on current line
+                e.preventDefault();
+                this.toggleLineComment(input, id);
+            } else if (e.key === '"' && !e.repeat) {
+                // Auto-close quotes (skip if key is being held down)
+                // Prevent double-firing (debounce 50ms)
+                if (this._lastQuoteTime && Date.now() - this._lastQuoteTime < 50) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                this._lastQuoteTime = Date.now();
+
+                e.preventDefault();
+                e.stopPropagation();
+                this.insertQuotePair(input, id);
             }
         });
     }
@@ -176,6 +213,11 @@ class TextManager {
         const calculation = this.calculator.calculate(text);
 
         element.calculation = calculation;
+
+        // Always sync syntax highlighting (must happen before any early returns)
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(id);
+        }
 
         // Clear inline results first if text is empty or no calculation
         if (!text.trim() || !calculation) {
@@ -201,6 +243,11 @@ class TextManager {
         // Mark app as dirty for auto-save
         if (window.canvasApp) {
             window.canvasApp.markDirty();
+        }
+
+        // Sync syntax highlighting
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(id);
         }
     }
 
@@ -282,13 +329,35 @@ class TextManager {
         const textarea = element.input;
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
 
-        // Calculate line position
+        // Calculate line position accounting for wrapped lines
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 24;
         const textareaWidth = parseInt(textarea.style.width) || 120;
+        const text = textarea.value || '';
+        const lines = text.split('\n');
 
-        // Position to the right of the textarea at the specific line
+        // Calculate visual Y offset by measuring actual wrapped lines
+        let visualLineCount = 0;
+
+        for (let i = 0; i < lineIndex && i < lines.length; i++) {
+            const line = lines[i];
+            if (line.length === 0) {
+                visualLineCount += 1; // Empty line
+            } else {
+                // Measure actual text width for this line
+                const measureEl = this.createMeasureElement(line);
+                const actualWidth = measureEl.offsetWidth;
+                measureEl.remove();
+
+                // Calculate how many visual lines this text occupies
+                const contentWidth = textareaWidth - 20; // Account for padding
+                const wrappedLines = Math.max(1, Math.ceil(actualWidth / contentWidth));
+                visualLineCount += wrappedLines;
+            }
+        }
+
+        // Position to the right of the textarea at the calculated visual line
         inlineResult.style.left = (screenPos.x + textareaWidth + 10) + 'px';
-        inlineResult.style.top = (screenPos.y + (lineIndex * lineHeight) + 8) + 'px';
+        inlineResult.style.top = (screenPos.y + (visualLineCount * lineHeight) + 8) + 'px';
     }
 
     clearInlineResults(element) {
@@ -756,64 +825,58 @@ class TextManager {
                 textarea.style.paddingBottom = '8px';
                 testElement.remove();
             } else {
-                // Content exceeds max chars - make it scrollable horizontally
-                const testElement = this.createMeasureElement('A'.repeat(maxChars));
-                const maxWidth = testElement.offsetWidth + 20;
+                // Content exceeds max chars - wrap text and expand vertically
+                const maxWidth = 600; // Max width before wrapping
                 textarea.style.width = maxWidth + 'px';
-                textarea.style.height = '40px';
-                textarea.style.overflowX = 'scroll';
-                textarea.style.overflowY = 'hidden';
-                textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
-                textarea.style.lineHeight = '24px'; // Consistent line height
+                textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping
+                textarea.style.wordBreak = 'break-word';
+                textarea.style.lineHeight = '24px';
                 textarea.style.paddingTop = '8px';
                 textarea.style.paddingBottom = '8px';
-                testElement.remove();
+
+                // Use scrollHeight to determine actual content height
+                textarea.style.height = 'auto';
+                const scrollHeight = textarea.scrollHeight;
+                const maxHeight = 50 * 24; // Max 50 lines
+                const newHeight = Math.min(maxHeight, Math.max(40, scrollHeight));
+                textarea.style.height = newHeight + 'px';
+
+                textarea.style.overflowX = 'hidden';
+                textarea.style.overflowY = scrollHeight > maxHeight ? 'scroll' : 'hidden';
             }
         } else {
             // Multi-line content with manual breaks - expand vertically
-            // PRESERVE the expanded width if it was previously expanded, but also check if we need more width
-            const preservedWidth = wasExpanded ? Math.max(currentWidth, 120) : 120;
-
-            // Check if any line needs more width than current
+            // Use a reasonable max width, then let text wrap
+            const maxWidth = 600;
             const lines = text.split('\n');
-            let maxNeededWidth = preservedWidth;
 
+            // Check if any single line needs more width (up to maxWidth)
+            let neededWidth = 120;
             lines.forEach(line => {
                 if (line.trim()) {
                     const testElement = this.createMeasureElement(line);
-                    const lineWidth = testElement.offsetWidth + 20;
-                    maxNeededWidth = Math.max(maxNeededWidth, lineWidth);
+                    const lineWidth = Math.min(maxWidth, testElement.offsetWidth + 20);
+                    neededWidth = Math.max(neededWidth, lineWidth);
                     testElement.remove();
                 }
             });
 
-            const maxLines = 50;
-            const lineHeight = 24;
-            const minHeight = 40;
-            const maxHeight = maxLines * lineHeight;
-
-            // Calculate height based on actual line count instead of scrollHeight
-            const lineCount = lines.length;
-            const paddingTotal = 16; // 8px top + 8px bottom
-            const calculatedHeight = Math.max(minHeight, (lineCount * lineHeight) + paddingTotal);
-            const newHeight = Math.min(maxHeight, calculatedHeight);
-
-            textarea.style.height = newHeight + 'px';
-            textarea.style.width = maxNeededWidth + 'px'; // Use the maximum needed width
+            textarea.style.width = neededWidth + 'px';
             textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping for multi-line
-
-            // Ensure consistent line-height and vertical alignment
-            textarea.style.lineHeight = lineHeight + 'px';
+            textarea.style.wordBreak = 'break-word';
+            textarea.style.lineHeight = '24px';
             textarea.style.paddingTop = '8px';
             textarea.style.paddingBottom = '8px';
 
-            // Enable vertical scrolling if content exceeds max height
-            if (calculatedHeight > maxHeight) {
-                textarea.style.overflowY = 'scroll'; // Use scroll to ensure scrollbar shows when focused
-            } else {
-                textarea.style.overflowY = 'hidden';
-            }
+            // Use scrollHeight to get actual visual height (includes wrapped lines)
+            textarea.style.height = 'auto';
+            const scrollHeight = textarea.scrollHeight;
+            const maxHeight = 50 * 24; // Max 50 lines
+            const newHeight = Math.min(maxHeight, Math.max(40, scrollHeight));
+            textarea.style.height = newHeight + 'px';
+
             textarea.style.overflowX = 'hidden';
+            textarea.style.overflowY = 'auto'; // Always allow scroll, scrollbar hidden via CSS
         }
     }
 
@@ -826,6 +889,69 @@ class TextManager {
         measure.textContent = text;
         document.body.appendChild(measure);
         return measure;
+    }
+
+    // Insert quote pair and place cursor between them
+    insertQuotePair(input, id) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+
+        // If cursor is already between quotes, just move cursor forward
+        const charBefore = text.charAt(start - 1);
+        const charAfter = text.charAt(start);
+        if (charBefore === '"' && charAfter === '"') {
+            input.selectionStart = input.selectionEnd = start + 1;
+            return;
+        }
+
+        if (start !== end) {
+            // Text is selected - wrap it in quotes
+            const selectedText = text.substring(start, end);
+            input.value = text.substring(0, start) + '"' + selectedText + '"' + text.substring(end);
+            input.selectionStart = start + 1;
+            input.selectionEnd = end + 1;
+        } else {
+            // No selection - insert "" and place cursor between
+            input.value = text.substring(0, start) + '""' + text.substring(end);
+            input.selectionStart = input.selectionEnd = start + 1;
+        }
+
+        this.handleInputChange(id);
+        this.autoResize(input);
+        if (this.syntaxHighlighter) this.syntaxHighlighter.sync(id);
+    }
+
+    // Toggle comment on current line (wrap/unwrap in quotes)
+    toggleLineComment(input, id) {
+        const text = input.value;
+        const start = input.selectionStart;
+
+        // Find current line boundaries
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        let lineEnd = text.indexOf('\n', start);
+        if (lineEnd === -1) lineEnd = text.length;
+
+        const line = text.substring(lineStart, lineEnd);
+        const trimmedLine = line.trim();
+
+        let newLine;
+        if (trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) {
+            // Uncomment - remove surrounding quotes
+            newLine = trimmedLine.substring(1, trimmedLine.length - 1);
+        } else {
+            // Comment - wrap in quotes
+            newLine = '"' + line + '"';
+        }
+
+        input.value = text.substring(0, lineStart) + newLine + text.substring(lineEnd);
+
+        // Restore cursor position
+        input.selectionStart = input.selectionEnd = lineStart + newLine.length;
+
+        this.handleInputChange(id);
+        this.autoResize(input);
+        if (this.syntaxHighlighter) this.syntaxHighlighter.sync(id);
     }
 
     createAdjacentInput(worldX, worldY) {
@@ -842,7 +968,12 @@ class TextManager {
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         element.input.style.left = screenPos.x + 'px';
         element.input.style.top = screenPos.y + 'px';
-        
+
+        // Sync syntax highlighter position
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(element.id);
+        }
+
         // Update delete button position
         if (element.deleteBtn) {
             const inputWidth = element.input.offsetWidth || 120;
@@ -906,6 +1037,11 @@ class TextManager {
         const element = this.textElements.get(id);
         if (!element) return;
 
+        // Clean up syntax highlighter
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.remove(id);
+        }
+
         // Clean up inline results
         this.clearInlineResults(element);
 
@@ -916,7 +1052,7 @@ class TextManager {
         if (element.input.parentNode) {
             element.input.parentNode.removeChild(element.input);
         }
-        
+
         if (element.deleteBtn && element.deleteBtn.parentNode) {
             element.deleteBtn.parentNode.removeChild(element.deleteBtn);
         }
@@ -969,22 +1105,20 @@ class TextManager {
         return elementIds.length;
     }
 
-    // Object pooling for performance
+    // Object pooling for performance (Disabled to prevent listener accumulation)
     getPooledInput() {
-        if (this.inputPool.length > 0) {
-            const input = this.inputPool.pop();
-            this.resetInput(input);
-            return input;
-        }
-
+        // Always create a fresh input to ensure no leftover event listeners
         return this.createInput();
     }
 
     returnToPool(input) {
+        // Pooling disabled to prevent listener accumulation
+        /*
         if (this.inputPool.length < this.maxPoolSize) {
             this.resetInput(input);
             this.inputPool.push(input);
         }
+        */
     }
 
     createInput() {
@@ -1060,6 +1194,11 @@ class TextManager {
             element.input.style.whiteSpace = elementData.whiteSpace || 'nowrap';
             element.input.style.overflowX = elementData.overflowX || 'auto';
             element.input.style.overflowY = elementData.overflowY || 'hidden';
+
+            // Sync syntax highlighter after setting value
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(element.id);
+            }
 
             // Restore calculation if present
             if (elementData.text) {
