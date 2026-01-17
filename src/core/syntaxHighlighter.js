@@ -70,6 +70,10 @@ class SyntaxHighlighter {
         // Highlight "quoted comments" - gray (allow empty strings)
         html = html.replace(/"([^"]*)"/g, '<span class="syntax-comment">"$1"</span>');
 
+        // Highlight accounting numbers (123) - red
+        // Matches (number) with optional spaces and common separators
+        html = html.replace(/(\(\s*[0-9.,]+\s*\))/g, '<span class="syntax-negative">$1</span>');
+
         // Highlight #hashtags - purple (word characters after #)
         html = html.replace(/#(\w*)/g, '<span class="syntax-hashtag">#$1</span>');
 

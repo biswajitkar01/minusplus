@@ -153,14 +153,18 @@ class CalculationEngine {
 
     // Calculate horizontal sequence (space-separated numbers)
     calculateHorizontalSequence(text) {
+        // Normalize accounting parentheses with spaces: "( 200 )" -> "(200)"
+        // This ensures they are treated as a single token (negative number) instead of separate parts
+        let normalizedText = text.replace(/\(\s*([0-9.,$€£¥₹]+)\s*\)/g, '($1)');
+
         // Simple parentheses rule:
         // - If any (...) group contains more than a plain number, treat entire line as a math expression.
         // - If parentheses wrap a single number (accounting), fall through to existing parsing.
-        if (text.includes('(') && text.includes(')')) {
+        if (normalizedText.includes('(') && normalizedText.includes(')')) {
             const paren = /\(([^()]*)\)/g;
             let hasMathGroup = false;
             let m;
-            while ((m = paren.exec(text)) !== null) {
+            while ((m = paren.exec(normalizedText)) !== null) {
                 const inner = m[1].trim();
                 // Plain number (optional leading - and commas/decimals/currency)
                 const isPlainNumber = /^-?\$?[0-9][0-9,]*(?:\.[0-9]+)?$/.test(inner);
@@ -169,7 +173,7 @@ class CalculationEngine {
 
             if (hasMathGroup) {
                 try {
-                    let cleanText = text
+                    let cleanText = normalizedText
                         .replace(/×/g, '*')
                         .replace(/÷/g, '/');
 
@@ -200,7 +204,7 @@ class CalculationEngine {
         }
 
         // First try to parse as a mathematical expression (no spaces required)
-        const expressionResult = this.parseExpression([text]);
+        const expressionResult = this.parseExpression([normalizedText]);
         if (expressionResult && expressionResult.numbers.length > 1) {
             return {
                 type: 'horizontal',
@@ -213,7 +217,7 @@ class CalculationEngine {
         }
 
         // Fallback to space-separated parsing
-        const parts = text.split(/\s+/);
+        const parts = normalizedText.split(/\s+/);
         const result = this.parseExpression(parts);
 
         if (!result || result.numbers.length <= 1) {
