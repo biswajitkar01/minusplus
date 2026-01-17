@@ -5,6 +5,7 @@ import InfiniteCanvas from './core/canvas.js';
 import CalculationEngine from './core/calculator.js';
 import TextManager from './core/textManager.js';
 import ClipboardManager from './core/clipboardManager.js';
+import SyntaxHighlighter from './core/syntaxHighlighter.js';
 import TextHighlighter from './utils/highlighter.js';
 import StorageManager from './utils/storage.js';
 
@@ -23,7 +24,8 @@ class MinusPlusApp {
             // Initialize core systems
             this.canvas = new InfiniteCanvas('main-canvas');
             this.calculator = new CalculationEngine();
-            this.textManager = new TextManager(this.canvas, this.calculator);
+            this.syntaxHighlighter = new SyntaxHighlighter();
+            this.textManager = new TextManager(this.canvas, this.calculator, this.syntaxHighlighter);
             this.clipboardManager = new ClipboardManager();
             this.highlighter = new TextHighlighter();
             this.storage = new StorageManager();
@@ -180,7 +182,7 @@ class MinusPlusApp {
         let mouseDownPos = null;
         let mouseDownTime = 0;
         let mouseHasMoved = false;
-        
+
         this.canvas.canvas.addEventListener('mousedown', (e) => {
             if (e.button === 0) { // Left click only
                 mouseDownPos = { x: e.clientX, y: e.clientY };
@@ -188,15 +190,15 @@ class MinusPlusApp {
                 mouseHasMoved = false;
             }
         });
-        
+
         this.canvas.canvas.addEventListener('mouseup', (e) => {
             if (e.button === 0 && mouseDownPos) {
                 const moveDistance = Math.sqrt(
-                    Math.pow(e.clientX - mouseDownPos.x, 2) + 
+                    Math.pow(e.clientX - mouseDownPos.x, 2) +
                     Math.pow(e.clientY - mouseDownPos.y, 2)
                 );
                 const clickDuration = Date.now() - mouseDownTime;
-                
+
                 // If it's a click (not a drag)
                 if (moveDistance < 5 && clickDuration < 200) {
                     // If first visit and welcome is still showing, hide it and show example
@@ -220,7 +222,7 @@ class MinusPlusApp {
                     const vp = this.canvas.getViewport?.();
                     this.track('input_created', { method: 'click', zoom: vp?.zoom });
                 }
-                
+
                 mouseDownPos = null;
             }
         });
@@ -240,7 +242,7 @@ class MinusPlusApp {
             if (e.touches.length === 1) {
                 // Stop any ongoing momentum when starting new touch
                 this.canvas.stopMomentum();
-                
+
                 touchStartTime = Date.now();
                 const touch = e.touches[0];
                 const rect = this.canvas.canvas.getBoundingClientRect();
@@ -280,35 +282,35 @@ class MinusPlusApp {
         let dragFrame = null;
         let lastTouchPos = null;
         let currentTouchPos = null;
-        
+
         this.canvas.canvas.addEventListener('touchmove', (e) => {
             if (e.touches.length === 1 && !isPinching) {
                 e.preventDefault();
                 const touch = e.touches[0];
                 const rect = this.canvas.canvas.getBoundingClientRect();
-                
+
                 currentTouchPos = {
                     x: touch.clientX - rect.left,
                     y: touch.clientY - rect.top
                 };
-                
+
                 // Initialize last position on first move
                 if (!lastTouchPos) {
                     lastTouchPos = { ...currentTouchPos };
                     return;
                 }
-                
+
                 // Calculate total distance moved from start
                 const totalDistance = Math.sqrt(
                     Math.pow(currentTouchPos.x - touchStartPos.x, 2) +
                     Math.pow(currentTouchPos.y - touchStartPos.y, 2)
                 );
-                
+
                 // Mark as moved if we've gone beyond minimal threshold
                 if (totalDistance > 3) {
                     hasMoved = true;
                 }
-                
+
                 // Always update position for smooth dragging
                 if (!dragFrame) {
                     dragFrame = requestAnimationFrame(() => {
@@ -316,13 +318,13 @@ class MinusPlusApp {
                             // Calculate smooth delta
                             const deltaX = currentTouchPos.x - lastTouchPos.x;
                             const deltaY = currentTouchPos.y - lastTouchPos.y;
-                            
+
                             // Apply pan only if there's actual movement
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, true); // true = mobile
                                 this.textManager.onCanvasTransform();
                             }
-                            
+
                             lastTouchPos = { ...currentTouchPos };
                         }
                         dragFrame = null;
@@ -363,10 +365,10 @@ class MinusPlusApp {
             }
             lastTouchPos = null;
             currentTouchPos = null;
-            
+
             if (e.changedTouches.length === 1 && !isPinching) {
                 const touchDuration = Date.now() - touchStartTime;
-                
+
                 // Start momentum scrolling if user was panning
                 if (hasMoved) {
                     this.canvas.startMomentum(() => {
@@ -434,7 +436,7 @@ class MinusPlusApp {
             if (e.button === 0) { // Left click
                 // Stop any momentum when starting new drag
                 this.canvas.stopMomentum();
-                
+
                 dragStartPos = { x: e.clientX, y: e.clientY };
                 currentMousePos = { x: e.clientX, y: e.clientY };
                 lastMousePos = { ...currentMousePos };
@@ -447,36 +449,36 @@ class MinusPlusApp {
             if (dragStartPos && !isDragging) {
                 // Check if we've moved enough to start dragging
                 const moveDistance = Math.sqrt(
-                    Math.pow(e.clientX - dragStartPos.x, 2) + 
+                    Math.pow(e.clientX - dragStartPos.x, 2) +
                     Math.pow(e.clientY - dragStartPos.y, 2)
                 );
-                
+
                 if (moveDistance > 5) {
                     isDragging = true;
                     mouseHasMoved = true;
                     this.canvas.canvas.style.cursor = 'grabbing';
                 }
             }
-            
+
             if (isDragging) {
                 currentMousePos = { x: e.clientX, y: e.clientY };
-                
+
                 // Use RAF for smooth updates
                 if (!mouseDragFrame) {
                     mouseDragFrame = requestAnimationFrame(() => {
                         if (currentMousePos && lastMousePos) {
                             const deltaX = currentMousePos.x - lastMousePos.x;
                             const deltaY = currentMousePos.y - lastMousePos.y;
-                            
+
                             // Apply pan only if there's actual movement
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, false); // false = desktop
                                 this.textManager.onCanvasTransform();
-                                
+
                                 // Accumulate pan distance
                                 panDistance += Math.hypot(deltaX, deltaY);
                             }
-                            
+
                             lastMousePos = { ...currentMousePos };
                         }
                         mouseDragFrame = null;
@@ -492,22 +494,22 @@ class MinusPlusApp {
                     cancelAnimationFrame(mouseDragFrame);
                     mouseDragFrame = null;
                 }
-                
+
                 isDragging = false;
                 this.canvas.canvas.style.cursor = 'crosshair';
-                
+
                 // Start momentum scrolling
                 this.canvas.startMomentum(() => {
                     this.textManager.onCanvasTransform();
                 });
-                
+
                 // Track pan once when drag ends
                 if (panDistance > 0) {
                     this.track('pan', { distance: Math.round(panDistance) });
                     panDistance = 0;
                 }
             }
-            
+
             // Reset all mouse tracking
             dragStartPos = null;
             lastMousePos = null;
@@ -602,7 +604,7 @@ class MinusPlusApp {
 
         // Clear all button functionality
         this.setupClearAllButton();
-        
+
         // Recenter button functionality
         this.setupRecenterButton();
     }
@@ -683,12 +685,12 @@ class MinusPlusApp {
 
     setupRecenterButton() {
         if (!this.recenterButton) return;
-        
+
         // Show button when canvas has content
         if (this.textManager.textElements.size > 0) {
             this.recenterButton.classList.add('visible');
         }
-        
+
         this.recenterButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.canvas.resetView();
@@ -697,7 +699,7 @@ class MinusPlusApp {
             this.track('reset_view', { source: 'button' });
         });
     }
-    
+
     setupClearAllButton() {
         console.log('Setting up clear all button...');
 

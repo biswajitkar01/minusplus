@@ -2,9 +2,10 @@
 // Handles text inputs, auto-calculation, and real-time updates
 
 class TextManager {
-    constructor(canvas, calculator) {
+    constructor(canvas, calculator, syntaxHighlighter) {
         this.canvas = canvas;
         this.calculator = calculator;
+        this.syntaxHighlighter = syntaxHighlighter;
         this.activeInput = null;
         this.textElements = new Map();
         this.elementIdCounter = 0;
@@ -43,7 +44,7 @@ class TextManager {
         // Set initial size
         input.style.width = '120px';
         input.style.minHeight = '40px';
-        
+
         // Create delete button for mobile
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'input-delete-btn';
@@ -60,7 +61,7 @@ class TextManager {
         document.body.appendChild(input);
         document.body.appendChild(deleteBtn);
         input.focus();
-        
+
         // Show delete button immediately for new input on mobile
         const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
         if (isMobile) {
@@ -89,6 +90,12 @@ class TextManager {
             window.canvasApp.hideHelpIndicator();
         }
 
+        // Attach syntax highlighter
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.attach(input, id);
+            input.classList.add('syntax-active');
+        }
+
         return element;
     }
 
@@ -102,6 +109,11 @@ class TextManager {
             }, 150);
 
             this.autoResize(input);
+
+            // Sync syntax highlighter
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(id);
+            }
 
             // Update result position immediately to prevent jittering
             const element = this.textElements.get(id);
@@ -122,7 +134,7 @@ class TextManager {
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
-            
+
             // Show delete button for this input
             const element = this.textElements.get(id);
             if (element && element.deleteBtn) {
@@ -139,7 +151,7 @@ class TextManager {
 
         input.addEventListener('blur', () => {
             input.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            
+
             // Hide delete button when input loses focus (with delay to allow clicking it)
             const element = this.textElements.get(id);
             if (element && element.deleteBtn) {
@@ -164,6 +176,14 @@ class TextManager {
                 // Ctrl+Enter (or Cmd+Enter on Mac) creates a new input box
                 e.preventDefault();
                 this.createAdjacentInput(worldX, worldY + 60);
+            } else if (e.key === '/' && (e.ctrlKey || e.metaKey)) {
+                // Ctrl+/ or Cmd+/ toggles comment on current line
+                e.preventDefault();
+                this.toggleLineComment(input, id);
+            } else if (e.key === '"') {
+                // Auto-close quotes
+                e.preventDefault();
+                this.insertQuotePair(input, id);
             }
         });
     }
@@ -828,6 +848,61 @@ class TextManager {
         return measure;
     }
 
+    // Insert quote pair and place cursor between them
+    insertQuotePair(input, id) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+
+        if (start !== end) {
+            // Text is selected - wrap it in quotes
+            const selectedText = text.substring(start, end);
+            input.value = text.substring(0, start) + '"' + selectedText + '"' + text.substring(end);
+            input.selectionStart = start + 1;
+            input.selectionEnd = end + 1;
+        } else {
+            // No selection - insert "" and place cursor between
+            input.value = text.substring(0, start) + '""' + text.substring(end);
+            input.selectionStart = input.selectionEnd = start + 1;
+        }
+
+        this.handleInputChange(id);
+        this.autoResize(input);
+        if (this.syntaxHighlighter) this.syntaxHighlighter.sync(id);
+    }
+
+    // Toggle comment on current line (wrap/unwrap in quotes)
+    toggleLineComment(input, id) {
+        const text = input.value;
+        const start = input.selectionStart;
+
+        // Find current line boundaries
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        let lineEnd = text.indexOf('\n', start);
+        if (lineEnd === -1) lineEnd = text.length;
+
+        const line = text.substring(lineStart, lineEnd);
+        const trimmedLine = line.trim();
+
+        let newLine;
+        if (trimmedLine.startsWith('"') && trimmedLine.endsWith('"')) {
+            // Uncomment - remove surrounding quotes
+            newLine = trimmedLine.substring(1, trimmedLine.length - 1);
+        } else {
+            // Comment - wrap in quotes
+            newLine = '"' + line + '"';
+        }
+
+        input.value = text.substring(0, lineStart) + newLine + text.substring(lineEnd);
+
+        // Restore cursor position
+        input.selectionStart = input.selectionEnd = lineStart + newLine.length;
+
+        this.handleInputChange(id);
+        this.autoResize(input);
+        if (this.syntaxHighlighter) this.syntaxHighlighter.sync(id);
+    }
+
     createAdjacentInput(worldX, worldY) {
         return this.createTextInput(worldX, worldY);
     }
@@ -842,7 +917,12 @@ class TextManager {
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
         element.input.style.left = screenPos.x + 'px';
         element.input.style.top = screenPos.y + 'px';
-        
+
+        // Sync syntax highlighter position
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(element.id);
+        }
+
         // Update delete button position
         if (element.deleteBtn) {
             const inputWidth = element.input.offsetWidth || 120;
@@ -906,6 +986,11 @@ class TextManager {
         const element = this.textElements.get(id);
         if (!element) return;
 
+        // Clean up syntax highlighter
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.remove(id);
+        }
+
         // Clean up inline results
         this.clearInlineResults(element);
 
@@ -916,7 +1001,7 @@ class TextManager {
         if (element.input.parentNode) {
             element.input.parentNode.removeChild(element.input);
         }
-        
+
         if (element.deleteBtn && element.deleteBtn.parentNode) {
             element.deleteBtn.parentNode.removeChild(element.deleteBtn);
         }
@@ -1060,6 +1145,11 @@ class TextManager {
             element.input.style.whiteSpace = elementData.whiteSpace || 'nowrap';
             element.input.style.overflowX = elementData.overflowX || 'auto';
             element.input.style.overflowY = elementData.overflowY || 'hidden';
+
+            // Sync syntax highlighter after setting value
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(element.id);
+            }
 
             // Restore calculation if present
             if (elementData.text) {
