@@ -131,6 +131,13 @@ class TextManager {
             }, 10);
         });
 
+        // Scroll handler - sync syntax overlay scroll position
+        input.addEventListener('scroll', () => {
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(id);
+            }
+        });
+
         // Focus handlers
         input.addEventListener('focus', () => {
             this.activeInput = input;
@@ -796,64 +803,58 @@ class TextManager {
                 textarea.style.paddingBottom = '8px';
                 testElement.remove();
             } else {
-                // Content exceeds max chars - make it scrollable horizontally
-                const testElement = this.createMeasureElement('A'.repeat(maxChars));
-                const maxWidth = testElement.offsetWidth + 20;
+                // Content exceeds max chars - wrap text and expand vertically
+                const maxWidth = 600; // Max width before wrapping
                 textarea.style.width = maxWidth + 'px';
-                textarea.style.height = '40px';
-                textarea.style.overflowX = 'scroll';
-                textarea.style.overflowY = 'hidden';
-                textarea.style.whiteSpace = 'nowrap'; // Prevent wrapping
-                textarea.style.lineHeight = '24px'; // Consistent line height
+                textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping
+                textarea.style.wordBreak = 'break-word';
+                textarea.style.lineHeight = '24px';
                 textarea.style.paddingTop = '8px';
                 textarea.style.paddingBottom = '8px';
-                testElement.remove();
+
+                // Use scrollHeight to determine actual content height
+                textarea.style.height = 'auto';
+                const scrollHeight = textarea.scrollHeight;
+                const maxHeight = 50 * 24; // Max 50 lines
+                const newHeight = Math.min(maxHeight, Math.max(40, scrollHeight));
+                textarea.style.height = newHeight + 'px';
+
+                textarea.style.overflowX = 'hidden';
+                textarea.style.overflowY = scrollHeight > maxHeight ? 'scroll' : 'hidden';
             }
         } else {
             // Multi-line content with manual breaks - expand vertically
-            // PRESERVE the expanded width if it was previously expanded, but also check if we need more width
-            const preservedWidth = wasExpanded ? Math.max(currentWidth, 120) : 120;
-
-            // Check if any line needs more width than current
+            // Use a reasonable max width, then let text wrap
+            const maxWidth = 600;
             const lines = text.split('\n');
-            let maxNeededWidth = preservedWidth;
 
+            // Check if any single line needs more width (up to maxWidth)
+            let neededWidth = 120;
             lines.forEach(line => {
                 if (line.trim()) {
                     const testElement = this.createMeasureElement(line);
-                    const lineWidth = testElement.offsetWidth + 20;
-                    maxNeededWidth = Math.max(maxNeededWidth, lineWidth);
+                    const lineWidth = Math.min(maxWidth, testElement.offsetWidth + 20);
+                    neededWidth = Math.max(neededWidth, lineWidth);
                     testElement.remove();
                 }
             });
 
-            const maxLines = 50;
-            const lineHeight = 24;
-            const minHeight = 40;
-            const maxHeight = maxLines * lineHeight;
-
-            // Calculate height based on actual line count instead of scrollHeight
-            const lineCount = lines.length;
-            const paddingTotal = 16; // 8px top + 8px bottom
-            const calculatedHeight = Math.max(minHeight, (lineCount * lineHeight) + paddingTotal);
-            const newHeight = Math.min(maxHeight, calculatedHeight);
-
-            textarea.style.height = newHeight + 'px';
-            textarea.style.width = maxNeededWidth + 'px'; // Use the maximum needed width
+            textarea.style.width = neededWidth + 'px';
             textarea.style.whiteSpace = 'pre-wrap'; // Allow wrapping for multi-line
-
-            // Ensure consistent line-height and vertical alignment
-            textarea.style.lineHeight = lineHeight + 'px';
+            textarea.style.wordBreak = 'break-word';
+            textarea.style.lineHeight = '24px';
             textarea.style.paddingTop = '8px';
             textarea.style.paddingBottom = '8px';
 
-            // Enable vertical scrolling if content exceeds max height
-            if (calculatedHeight > maxHeight) {
-                textarea.style.overflowY = 'scroll'; // Use scroll to ensure scrollbar shows when focused
-            } else {
-                textarea.style.overflowY = 'hidden';
-            }
+            // Use scrollHeight to get actual visual height (includes wrapped lines)
+            textarea.style.height = 'auto';
+            const scrollHeight = textarea.scrollHeight;
+            const maxHeight = 50 * 24; // Max 50 lines
+            const newHeight = Math.min(maxHeight, Math.max(40, scrollHeight));
+            textarea.style.height = newHeight + 'px';
+
             textarea.style.overflowX = 'hidden';
+            textarea.style.overflowY = scrollHeight > maxHeight ? 'scroll' : 'hidden';
         }
     }
 
