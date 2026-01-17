@@ -34,11 +34,20 @@ class SyntaxHighlighter {
         overlay.style.height = `${rect.height}px`;
 
         // Copy text styling
-        overlay.style.font = style.font;
+        // Copy text styling - robustly copy individual properties
+        // style.font is often empty in computed styles
+        overlay.style.fontFamily = style.fontFamily;
+        overlay.style.fontSize = style.fontSize;
+        overlay.style.fontWeight = style.fontWeight;
+        overlay.style.fontStyle = style.fontStyle;
+        overlay.style.letterSpacing = style.letterSpacing;
+        overlay.style.textTransform = style.textTransform;
+
         overlay.style.padding = style.padding;
         overlay.style.lineHeight = style.lineHeight;
         overlay.style.whiteSpace = style.whiteSpace;
         overlay.style.overflowWrap = style.overflowWrap;
+        overlay.style.textAlign = style.textAlign;
 
         // Sync scroll
         overlay.scrollTop = input.scrollTop;
@@ -58,11 +67,11 @@ class SyntaxHighlighter {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-        // Highlight "quoted comments" - gray
-        html = html.replace(/"([^"]+)"/g, '<span class="syntax-comment">"$1"</span>');
+        // Highlight "quoted comments" - gray (allow empty strings)
+        html = html.replace(/"([^"]*)"/g, '<span class="syntax-comment">"$1"</span>');
 
         // Highlight #hashtags - purple (word characters after #)
-        html = html.replace(/#(\w+)/g, '<span class="syntax-hashtag">#$1</span>');
+        html = html.replace(/#(\w*)/g, '<span class="syntax-hashtag">#$1</span>');
 
         // Preserve newlines
         html = html.replace(/\n/g, '<br>');

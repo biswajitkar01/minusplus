@@ -120,6 +120,11 @@ class MinusPlusApp {
                 // Auto-resize as we type
                 this.textManager.autoResize(element.input);
 
+                // Sync syntax highlighting for instant color feedback
+                if (this.textManager.syntaxHighlighter) {
+                    this.textManager.syntaxHighlighter.sync(element.id);
+                }
+
                 // Trigger calculation for numbers
                 if (this.shouldTriggerCalculation(element.input.value)) {
                     this.textManager.handleInputChange(element.id);

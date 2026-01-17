@@ -103,17 +103,18 @@ class TextManager {
         // Input change handler with debouncing
         let inputTimeout;
         input.addEventListener('input', (e) => {
+            // Sync syntax highlighting IMMEDIATELY for instant color feedback
+            if (this.syntaxHighlighter) {
+                this.syntaxHighlighter.sync(id);
+            }
+
+            // Debounce the heavy calculation logic
             clearTimeout(inputTimeout);
             inputTimeout = setTimeout(() => {
                 this.handleInputChange(id);
             }, 150);
 
             this.autoResize(input);
-
-            // Sync syntax highlighter
-            if (this.syntaxHighlighter) {
-                this.syntaxHighlighter.sync(id);
-            }
 
             // Update result position immediately to prevent jittering
             const element = this.textElements.get(id);
@@ -180,9 +181,18 @@ class TextManager {
                 // Ctrl+/ or Cmd+/ toggles comment on current line
                 e.preventDefault();
                 this.toggleLineComment(input, id);
-            } else if (e.key === '"') {
-                // Auto-close quotes
+            } else if (e.key === '"' && !e.repeat) {
+                // Auto-close quotes (skip if key is being held down)
+                // Prevent double-firing (debounce 50ms)
+                if (this._lastQuoteTime && Date.now() - this._lastQuoteTime < 50) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                this._lastQuoteTime = Date.now();
+
                 e.preventDefault();
+                e.stopPropagation();
                 this.insertQuotePair(input, id);
             }
         });
@@ -196,6 +206,11 @@ class TextManager {
         const calculation = this.calculator.calculate(text);
 
         element.calculation = calculation;
+
+        // Always sync syntax highlighting (must happen before any early returns)
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(id);
+        }
 
         // Clear inline results first if text is empty or no calculation
         if (!text.trim() || !calculation) {
@@ -221,6 +236,11 @@ class TextManager {
         // Mark app as dirty for auto-save
         if (window.canvasApp) {
             window.canvasApp.markDirty();
+        }
+
+        // Sync syntax highlighting
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.sync(id);
         }
     }
 
@@ -854,6 +874,14 @@ class TextManager {
         const end = input.selectionEnd;
         const text = input.value;
 
+        // If cursor is already between quotes, just move cursor forward
+        const charBefore = text.charAt(start - 1);
+        const charAfter = text.charAt(start);
+        if (charBefore === '"' && charAfter === '"') {
+            input.selectionStart = input.selectionEnd = start + 1;
+            return;
+        }
+
         if (start !== end) {
             // Text is selected - wrap it in quotes
             const selectedText = text.substring(start, end);
@@ -1054,22 +1082,20 @@ class TextManager {
         return elementIds.length;
     }
 
-    // Object pooling for performance
+    // Object pooling for performance (Disabled to prevent listener accumulation)
     getPooledInput() {
-        if (this.inputPool.length > 0) {
-            const input = this.inputPool.pop();
-            this.resetInput(input);
-            return input;
-        }
-
+        // Always create a fresh input to ensure no leftover event listeners
         return this.createInput();
     }
 
     returnToPool(input) {
+        // Pooling disabled to prevent listener accumulation
+        /*
         if (this.inputPool.length < this.maxPoolSize) {
             this.resetInput(input);
             this.inputPool.push(input);
         }
+        */
     }
 
     createInput() {
