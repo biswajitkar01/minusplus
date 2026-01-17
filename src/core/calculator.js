@@ -181,6 +181,10 @@ class CalculationEngine {
                     cleanText = cleanText.replace(/(\d)\s*\(/g, '$1*(');
                     cleanText = cleanText.replace(/\)\s*(\d)/g, ')*$1');
 
+                    // Support space as addition between numbers (e.g., "1 2" -> "1+2")
+                    // This creates consistency with the app's general space-as-addition logic
+                    cleanText = cleanText.replace(/(\d)\s+(\d)/g, '$1+$2');
+
                     // Allow only safe characters
                     cleanText = cleanText.replace(/[^0-9+\-*/().\s]/g, '');
 
