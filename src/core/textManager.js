@@ -329,13 +329,35 @@ class TextManager {
         const textarea = element.input;
         const screenPos = this.canvas.worldToScreen(element.worldX, element.worldY);
 
-        // Calculate line position
+        // Calculate line position accounting for wrapped lines
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 24;
         const textareaWidth = parseInt(textarea.style.width) || 120;
+        const text = textarea.value || '';
+        const lines = text.split('\n');
 
-        // Position to the right of the textarea at the specific line
+        // Calculate visual Y offset by measuring actual wrapped lines
+        let visualLineCount = 0;
+
+        for (let i = 0; i < lineIndex && i < lines.length; i++) {
+            const line = lines[i];
+            if (line.length === 0) {
+                visualLineCount += 1; // Empty line
+            } else {
+                // Measure actual text width for this line
+                const measureEl = this.createMeasureElement(line);
+                const actualWidth = measureEl.offsetWidth;
+                measureEl.remove();
+
+                // Calculate how many visual lines this text occupies
+                const contentWidth = textareaWidth - 20; // Account for padding
+                const wrappedLines = Math.max(1, Math.ceil(actualWidth / contentWidth));
+                visualLineCount += wrappedLines;
+            }
+        }
+
+        // Position to the right of the textarea at the calculated visual line
         inlineResult.style.left = (screenPos.x + textareaWidth + 10) + 'px';
-        inlineResult.style.top = (screenPos.y + (lineIndex * lineHeight) + 8) + 'px';
+        inlineResult.style.top = (screenPos.y + (visualLineCount * lineHeight) + 8) + 'px';
     }
 
     clearInlineResults(element) {
