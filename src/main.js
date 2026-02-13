@@ -917,4 +917,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.canvasApp = new MinusPlusApp();
 });
 
+// Register service worker for PWA install (only on localhost/HTTPS, not file://)
+if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then((reg) => console.log('Service worker registered:', reg.scope))
+            .catch((err) => console.log('Service worker not available:', err));
+    });
+}
+
 export default MinusPlusApp;
