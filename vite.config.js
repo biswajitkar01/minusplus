@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
 
 /**
  * Vite plugin to make the build output work from file:// protocol.
@@ -27,7 +29,54 @@ function portablePlugin() {
             // Remove type="module" and crossorigin from script tags
             html = html.replace(/ type="module"/g, '');
             html = html.replace(/ crossorigin/g, '');
+            // Point manifest to root-level portable manifest (with relative paths)
+            html = html.replace('./assets/manifest.webmanifest', './manifest.webmanifest');
             return html;
+        },
+        closeBundle() {
+            const distDir = resolve(__dirname, 'dist');
+            const portableDir = resolve(__dirname, 'portable');
+            const assetsDir = resolve(distDir, 'assets');
+            const srcAssetsDir = resolve(__dirname, 'src/assets');
+
+            // Fix manifest path in the final HTML (Vite rewrites it after transformIndexHtml)
+            const indexPath = resolve(distDir, 'index.html');
+            if (existsSync(indexPath)) {
+                let html = readFileSync(indexPath, 'utf-8');
+                html = html.replace('./assets/manifest.webmanifest', './manifest.webmanifest');
+                writeFileSync(indexPath, html);
+                console.log('  Fixed manifest path in index.html');
+            }
+
+            // Copy launcher scripts to dist root
+            const filesToCopy = [
+                { src: resolve(portableDir, 'start.bat'), dest: resolve(distDir, 'start.bat') },
+                { src: resolve(portableDir, 'start.command'), dest: resolve(distDir, 'start.command') },
+                { src: resolve(portableDir, 'sw.js'), dest: resolve(distDir, 'sw.js') },
+                { src: resolve(portableDir, 'manifest.webmanifest'), dest: resolve(distDir, 'manifest.webmanifest') },
+            ];
+
+            // Copy PWA icons to dist/assets (needed for manifest)
+            const iconsToCopy = [
+                'web-app-manifest-192x192.png',
+                'web-app-manifest-512x512.png',
+            ];
+
+            for (const { src, dest } of filesToCopy) {
+                if (existsSync(src)) {
+                    copyFileSync(src, dest);
+                    console.log(`  Copied: ${src} → ${dest}`);
+                }
+            }
+
+            for (const icon of iconsToCopy) {
+                const src = resolve(srcAssetsDir, icon);
+                const dest = resolve(assetsDir, icon);
+                if (existsSync(src)) {
+                    copyFileSync(src, dest);
+                    console.log(`  Copied icon: ${icon}`);
+                }
+            }
         },
     };
 }
