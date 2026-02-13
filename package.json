@@ -8,6 +8,7 @@
         "dev": "python3 -m http.server 8000",
         "dev-src": "cd src && python3 -m http.server 8000",
         "build": "echo 'No build step needed for vanilla JS' && exit 0",
+        "build:portable": "vite build",
         "deploy": "git add . && git commit -m 'Deploy to GitHub Pages' && git push origin main",
         "serve": "python3 -m http.server 8000",
         "test": "echo 'No tests yet' && exit 0",

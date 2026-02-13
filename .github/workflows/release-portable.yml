@@ -1,0 +1,64 @@
+# Build and publish the portable version as a GitHub Release
+name: Build Portable Release
+
+on:
+  # Trigger on version tags like v1.0.0, v1.2.3
+  push:
+    tags:
+      - 'v*'
+
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-portable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build portable version
+        run: npm run build:portable
+
+      - name: Create portable zip
+        run: |
+          cd dist
+          zip -r ../MinusPlus-Portable.zip .
+          cd ..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: MinusPlus ${{ github.ref_name }}
+          body: |
+            ## 📦 Portable MinusPlus Calculator
+
+            Download `MinusPlus-Portable.zip`, unzip it, and double-click `index.html` — no server needed!
+
+            ### What's included
+            - `index.html` — The app (just open this!)
+            - `assets/` — JS, CSS, and icons
+
+          files: MinusPlus-Portable.zip
+          draft: false
+          prerelease: false
+
+      # For manual workflow_dispatch (no tag), upload as artifact instead
+      - name: Upload build artifact
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: MinusPlus-Portable
+          path: dist/

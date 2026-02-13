@@ -16,6 +16,24 @@ Revolutionary calculator with infinite dark canvas interface. Click anywhere to 
 - **Mobile Support**: Touch-optimized for tablets and phones
 - **Persistent State**: Auto-save every 30 seconds with state recovery
 
+## 📦 Download Portable Version
+
+**No server needed!** Download, unzip, and double-click `index.html`.
+
+[![Download Portable](https://img.shields.io/github/v/release/biswajitkar01/minusplus?label=Download%20Portable&style=for-the-badge&color=brightgreen)](https://github.com/biswajitkar01/minusplus/releases/latest/download/MinusPlus-Portable.zip)
+
+> Just unzip and open `index.html` in any browser — works completely offline!
+
+### Build Portable Locally
+
+```bash
+git clone https://github.com/biswajitkar01/minusplus.git
+cd minusplus
+npm install
+npm run build:portable
+# Open dist/index.html in your browser
+```
+
 ## 🚀 Quick Start
 
 ### Live Demo
