@@ -555,6 +555,59 @@ class MinusPlusApp {
         });
 
         // Keyboard shortcuts
+        let escapeHoldTimer = null;
+        let escapeCountdownInterval = null;
+        let isEscapeHeld = false;
+        let escapeOverlay = null;
+        let escapeShowDelayTimer = null;
+
+        const showEscapeOverlay = () => {
+            if (!escapeOverlay) {
+                escapeOverlay = document.createElement('div');
+                escapeOverlay.className = 'escape-hold-overlay';
+
+                const topText = document.createElement('div');
+                topText.className = 'escape-text-top';
+                topText.textContent = 'Deleting Everything in';
+
+                const numberText = document.createElement('div');
+                numberText.className = 'escape-number';
+
+                const bottomText = document.createElement('div');
+                bottomText.className = 'escape-text-bottom';
+                bottomText.textContent = 'keep holding...';
+
+                escapeOverlay.appendChild(topText);
+                escapeOverlay.appendChild(numberText);
+                escapeOverlay.appendChild(bottomText);
+                document.body.appendChild(escapeOverlay);
+            }
+            let counter = 3;
+            escapeOverlay.querySelector('.escape-number').textContent = counter;
+            escapeOverlay.classList.add('visible');
+
+            escapeCountdownInterval = setInterval(() => {
+                counter--;
+                if (counter > 0) {
+                    escapeOverlay.querySelector('.escape-number').textContent = counter;
+                }
+            }, 1000);
+        };
+
+        const hideEscapeOverlay = () => {
+            if (escapeShowDelayTimer) {
+                clearTimeout(escapeShowDelayTimer);
+                escapeShowDelayTimer = null;
+            }
+            if (escapeOverlay) {
+                escapeOverlay.classList.remove('visible');
+            }
+            if (escapeCountdownInterval) {
+                clearInterval(escapeCountdownInterval);
+                escapeCountdownInterval = null;
+            }
+        };
+
         const onKeyDown = (e) => {
             // Reset view: Ctrl+0 only (support main row and numpad 0).
             // On macOS, use Control+0; Command+0 is left to the browser's default zoom reset.
@@ -585,12 +638,39 @@ class MinusPlusApp {
             }
 
             if (e.key === 'Escape') {
+                if (!isEscapeHeld && !e.repeat) {
+                    isEscapeHeld = true;
+                    // Add a delay before showing the banner to avoid flash on quick taps
+                    escapeShowDelayTimer = setTimeout(() => {
+                        showEscapeOverlay();
+                    }, 500);
+
+                    escapeHoldTimer = setTimeout(() => {
+                        hideEscapeOverlay();
+                        this.clearAllCalculations(true);
+                        escapeHoldTimer = null;
+                    }, 3000);
+                }
                 this.textManager.clearActiveInput();
             }
         };
+
+        const onKeyUp = (e) => {
+            if (e.key === 'Escape') {
+                isEscapeHeld = false;
+                if (escapeHoldTimer) {
+                    clearTimeout(escapeHoldTimer);
+                    escapeHoldTimer = null;
+                }
+                hideEscapeOverlay();
+            }
+        };
+
         // Capture phase so Ctrl+0 is handled early; Cmd+0 is allowed to pass through on macOS
         document.addEventListener('keydown', onKeyDown, true);
         window.addEventListener('keydown', onKeyDown, true);
+        document.addEventListener('keyup', onKeyUp, true);
+        window.addEventListener('keyup', onKeyUp, true);
 
         // Window resize
         window.addEventListener('resize', this.debounce(() => {
@@ -728,7 +808,7 @@ class MinusPlusApp {
         console.log('Clear all button event listener added');
     }
 
-    clearAllCalculations() {
+    clearAllCalculations(skipConfirm = false) {
         console.log('clearAllCalculations() called');
 
         // Show confirmation if there are calculations to clear
@@ -737,12 +817,14 @@ class MinusPlusApp {
 
         if (elementCount === 0) {
             console.log('No calculations to clear');
-            alert('No calculations to clear!'); // Temporary debug alert
+            if (!skipConfirm) {
+                alert('No calculations to clear!'); // Temporary debug alert
+            }
             return;
         }
 
         // Simple confirmation
-        const confirmed = confirm(`Clear all ${elementCount} calculations? This cannot be undone.`);
+        const confirmed = skipConfirm === true ? true : confirm(`Clear all ${elementCount} calculations? This cannot be undone.`);
         console.log('User confirmed:', confirmed);
 
         if (confirmed) {
