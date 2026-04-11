@@ -3,3 +3,4 @@ src/.DS_Store
 WARP.md
 node_modules/
 dist/
+*.zip
