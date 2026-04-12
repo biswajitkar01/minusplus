@@ -856,6 +856,42 @@ class MinusPlusApp {
                 this.track('theme_toggle', { theme: newTheme });
             });
         }
+
+        // Grid style toggle
+        const gridToggleBtn = document.getElementById('grid-toggle-btn');
+        if (gridToggleBtn) {
+            const gridStyles = ['lines', 'dots', 'crosses'];
+            const gridLabels = {
+                'lines': '▦ Lines',
+                'dots': '∷ Dots',
+                'crosses': '➕ Crosses'
+            };
+
+            // Restore saved grid style
+            const savedGrid = localStorage.getItem('minusplus_grid') || 'lines';
+            if (this.canvas) {
+                this.canvas.gridStyle = savedGrid;
+            }
+            gridToggleBtn.textContent = gridLabels[savedGrid];
+
+            gridToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Get current and next grid style
+                const currentGrid = this.canvas.gridStyle || 'lines';
+                const nextIndex = (gridStyles.indexOf(currentGrid) + 1) % gridStyles.length;
+                const nextGrid = gridStyles[nextIndex];
+                
+                // Update canvas and button
+                this.canvas.gridStyle = nextGrid;
+                gridToggleBtn.textContent = gridLabels[nextGrid];
+                localStorage.setItem('minusplus_grid', nextGrid);
+                
+                // Re-render canvas
+                this.canvas.render();
+                this.track('grid_toggle', { style: nextGrid });
+            });
+        }
     }
 
     setupRecenterButton() {

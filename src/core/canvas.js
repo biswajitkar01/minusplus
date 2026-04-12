@@ -127,18 +127,54 @@ class InfiniteCanvas {
         const startX = originX % screenGridSize;
         const startY = originY % screenGridSize;
 
-        // Draw vertical lines across the entire viewport
-        for (let x = startX; x < this.viewport.width; x += screenGridSize) {
-            const lineX = Math.floor(x) + 0.5;
-            this.ctx.moveTo(lineX, 0);
-            this.ctx.lineTo(lineX, this.viewport.height);
-        }
+        // Determine grid style
+        const style = this.gridStyle || 'lines';
 
-        // Draw horizontal lines across the entire viewport
-        for (let y = startY; y < this.viewport.height; y += screenGridSize) {
-            const lineY = Math.floor(y) + 0.5;
-            this.ctx.moveTo(0, lineY);
-            this.ctx.lineTo(this.viewport.width, lineY);
+        if (style === 'lines') {
+            // Draw vertical lines across the entire viewport
+            for (let x = startX; x < this.viewport.width; x += screenGridSize) {
+                const lineX = Math.floor(x) + 0.5;
+                this.ctx.moveTo(lineX, 0);
+                this.ctx.lineTo(lineX, this.viewport.height);
+            }
+
+            // Draw horizontal lines across the entire viewport
+            for (let y = startY; y < this.viewport.height; y += screenGridSize) {
+                const lineY = Math.floor(y) + 0.5;
+                this.ctx.moveTo(0, lineY);
+                this.ctx.lineTo(this.viewport.width, lineY);
+            }
+        } else if (style === 'dots' || style === 'crosses') {
+            // Fill dots instead of stroke if dots style
+            if (style === 'dots') {
+                this.ctx.fillStyle = `rgba(${this.gridRgb}, ${opacity * 1.5})`;
+            }
+
+            const crossSize = Math.max(2, Math.floor(screenGridSize * 0.05));
+            
+            for (let x = startX; x < this.viewport.width; x += screenGridSize) {
+                for (let y = startY; y < this.viewport.height; y += screenGridSize) {
+                    const cx = Math.floor(x) + 0.5;
+                    const cy = Math.floor(y) + 0.5;
+
+                    if (style === 'dots') {
+                        this.ctx.moveTo(cx, cy);
+                        this.ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
+                    } else if (style === 'crosses') {
+                        // Horizontal bar
+                        this.ctx.moveTo(cx - crossSize, cy);
+                        this.ctx.lineTo(cx + crossSize, cy);
+                        // Vertical bar
+                        this.ctx.moveTo(cx, cy - crossSize);
+                        this.ctx.lineTo(cx, cy + crossSize);
+                    }
+                }
+            }
+            
+            if (style === 'dots') {
+                this.ctx.fill();
+                this.ctx.beginPath(); // Reset so stroke() below doesn't draw dots
+            }
         }
 
         this.ctx.stroke();
@@ -153,16 +189,46 @@ class InfiniteCanvas {
                 const fineStartX = originX % fineGridSize;
                 const fineStartY = originY % fineGridSize;
 
-                for (let x = fineStartX; x < this.viewport.width; x += fineGridSize) {
-                    const lineX = Math.floor(x) + 0.5;
-                    this.ctx.moveTo(lineX, 0);
-                    this.ctx.lineTo(lineX, this.viewport.height);
-                }
+                if (style === 'lines') {
+                    for (let x = fineStartX; x < this.viewport.width; x += fineGridSize) {
+                        const lineX = Math.floor(x) + 0.5;
+                        this.ctx.moveTo(lineX, 0);
+                        this.ctx.lineTo(lineX, this.viewport.height);
+                    }
 
-                for (let y = fineStartY; y < this.viewport.height; y += fineGridSize) {
-                    const lineY = Math.floor(y) + 0.5;
-                    this.ctx.moveTo(0, lineY);
-                    this.ctx.lineTo(this.viewport.width, lineY);
+                    for (let y = fineStartY; y < this.viewport.height; y += fineGridSize) {
+                        const lineY = Math.floor(y) + 0.5;
+                        this.ctx.moveTo(0, lineY);
+                        this.ctx.lineTo(this.viewport.width, lineY);
+                    }
+                } else if (style === 'dots' || style === 'crosses') {
+                    if (style === 'dots') {
+                        this.ctx.fillStyle = `rgba(${this.gridRgb}, 0.05)`;
+                    }
+
+                    const fineCrossSize = Math.max(1, Math.floor(fineGridSize * 0.05));
+                    
+                    for (let x = fineStartX; x < this.viewport.width; x += fineGridSize) {
+                        for (let y = fineStartY; y < this.viewport.height; y += fineGridSize) {
+                            const cx = Math.floor(x) + 0.5;
+                            const cy = Math.floor(y) + 0.5;
+
+                            if (style === 'dots') {
+                                this.ctx.moveTo(cx, cy);
+                                this.ctx.arc(cx, cy, 1, 0, Math.PI * 2);
+                            } else if (style === 'crosses') {
+                                this.ctx.moveTo(cx - fineCrossSize, cy);
+                                this.ctx.lineTo(cx + fineCrossSize, cy);
+                                this.ctx.moveTo(cx, cy - fineCrossSize);
+                                this.ctx.lineTo(cx, cy + fineCrossSize);
+                            }
+                        }
+                    }
+
+                    if (style === 'dots') {
+                        this.ctx.fill();
+                        this.ctx.beginPath();
+                    }
                 }
 
                 this.ctx.stroke();

@@ -481,7 +481,8 @@ body {
     gap: var(--spacing-sm);
 }
 
-#theme-toggle-btn {
+#theme-toggle-btn,
+#grid-toggle-btn {
     cursor: pointer;
     background: none;
 }
