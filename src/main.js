@@ -778,6 +778,84 @@ class MinusPlusApp {
                 this.hideShortcutsPopup();
             }
         });
+
+        // Theme toggle
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        if (themeToggleBtn) {
+            // Restore saved theme
+            const savedTheme = localStorage.getItem('minusplus_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggleBtn.textContent = '🌙 Dark';
+            }
+
+            themeToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                const newTheme = isLight ? 'dark' : 'light';
+
+                // Function to actually perform the theme switch
+                const switchTheme = () => {
+                    if (newTheme === 'light') {
+                        document.documentElement.setAttribute('data-theme', 'light');
+                        themeToggleBtn.textContent = '🌙 Dark';
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                        themeToggleBtn.textContent = '☀️ Light';
+                    }
+                    localStorage.setItem('minusplus_theme', newTheme);
+                    this.canvas.render(); // Re-render canvas with new colors
+                };
+
+                // Use the modern View Transitions API if supported
+                if (!document.startViewTransition) {
+                    switchTheme();
+                    this.track('theme_toggle', { theme: newTheme });
+                    return;
+                }
+
+                // Get button position for the reveal origin
+                const rect = themeToggleBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+
+                // Max radius to cover the full screen
+                const maxRadius = Math.ceil(
+                    Math.sqrt(
+                        Math.max(x, window.innerWidth - x) ** 2 +
+                        Math.max(y, window.innerHeight - y) ** 2
+                    )
+                );
+
+                // Start the transition
+                const transition = document.startViewTransition(() => {
+                    switchTheme();
+                });
+
+                // Wait for the pseudo-elements to be created, then animate them
+                transition.ready.then(() => {
+                    // We animate the ::view-transition-new(root) pseudo-element
+                    // to clip from 0 out to the max screen radius.
+                    // This creates a seamless "portal" revealing the actual new canvas underneath.
+                    document.documentElement.animate(
+                        {
+                            clipPath: [
+                                `circle(0px at ${x}px ${y}px)`,
+                                `circle(${maxRadius}px at ${x}px ${y}px)`
+                            ],
+                        },
+                        {
+                            duration: 700,
+                            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                            pseudoElement: '::view-transition-new(root)',
+                        }
+                    );
+                });
+
+                this.track('theme_toggle', { theme: newTheme });
+            });
+        }
     }
 
     setupRecenterButton() {

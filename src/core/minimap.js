@@ -210,9 +210,15 @@ class Minimap {
             };
         };
         
+        // Read theme colors
+        const styles = getComputedStyle(document.documentElement);
+        const blipColor = styles.getPropertyValue('--minimap-blip').trim() || '#ff4444';
+        const viewStroke = styles.getPropertyValue('--minimap-viewport-stroke').trim() || 'white';
+        const viewFill = styles.getPropertyValue('--minimap-viewport-fill').trim() || 'rgba(255, 255, 255, 0.1)';
+        
         // 1. Draw elements
         if (this.app.textManager && this.app.textManager.textElements) {
-            this.ctx.fillStyle = '#ff4444'; // Red blips for boxes
+            this.ctx.fillStyle = blipColor;
             
             this.app.textManager.textElements.forEach(element => {
                 const w = element.input.offsetWidth || 120;
@@ -234,13 +240,13 @@ class Minimap {
         
         const mappedView = mapCoord(viewport.x, viewport.y, viewW, viewH);
         
-        this.ctx.strokeStyle = 'white';
+        this.ctx.strokeStyle = viewStroke;
         this.ctx.lineWidth = 1.5;
         this.ctx.setLineDash([3, 3]);
         this.ctx.strokeRect(mappedView.x, mappedView.y, mappedView.w, mappedView.h);
         
         // Filled translucent viewport area
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.fillStyle = viewFill;
         this.ctx.fillRect(mappedView.x, mappedView.y, mappedView.w, mappedView.h);
         
         this.ctx.restore();

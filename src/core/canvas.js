@@ -77,8 +77,12 @@ class InfiniteCanvas {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.viewport.width, this.viewport.height);
 
-        // Set canvas background
-        this.ctx.fillStyle = '#1a1a1a';
+        // Set canvas background from theme
+        const styles = getComputedStyle(document.documentElement);
+        this.canvasBg = styles.getPropertyValue('--canvas-bg').trim() || '#1a1a1a';
+        this.gridRgb = styles.getPropertyValue('--canvas-grid-rgb').trim() || '255, 255, 255';
+
+        this.ctx.fillStyle = this.canvasBg;
         this.ctx.fillRect(0, 0, this.viewport.width, this.viewport.height);
 
         // Draw consistent grid pattern
@@ -111,7 +115,7 @@ class InfiniteCanvas {
         const screenGridSize = baseGridSize * this.viewport.zoom;
 
         this.ctx.save();
-        this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+        this.ctx.strokeStyle = `rgba(${this.gridRgb}, ${opacity})`;
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
 
@@ -143,7 +147,7 @@ class InfiniteCanvas {
         if (this.viewport.zoom > 2) {
             const fineGridSize = (baseGridSize / 5) * this.viewport.zoom;
             if (fineGridSize >= 8) { // Only show if not too dense
-                this.ctx.strokeStyle = `rgba(255, 255, 255, 0.03)`;
+                this.ctx.strokeStyle = `rgba(${this.gridRgb}, 0.03)`;
                 this.ctx.beginPath();
 
                 const fineStartX = originX % fineGridSize;

@@ -478,6 +478,12 @@ body {
     margin-top: var(--spacing-md);
     display: flex;
     justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+#theme-toggle-btn {
+    cursor: pointer;
+    background: none;
 }
 
 .popup-link {

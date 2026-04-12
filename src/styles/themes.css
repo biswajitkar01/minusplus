@@ -64,6 +64,147 @@
     --grid-color: rgba(255, 255, 255, 0.05);
     --grid-major: rgba(255, 255, 255, 0.1);
     --guide-color: rgba(0, 122, 204, 0.3);
+
+    /* Canvas rendering colors (read by JS) */
+    --canvas-bg: #1a1a1a;
+    --canvas-grid-rgb: 255, 255, 255;
+    --canvas-text: #ffffff;
+
+    /* Minimap colors */
+    --minimap-blip: #ff4444;
+    --minimap-viewport-stroke: white;
+    --minimap-viewport-fill: rgba(255, 255, 255, 0.1);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #e8e8e8;
+    --bg-tertiary: #d4d4d4;
+    --bg-overlay: rgba(245, 245, 245, 0.95);
+
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    --text-inverse: #ffffff;
+
+    --accent-blue: #0066cc;
+    --accent-blue-light: #3399ff;
+    --accent-blue-dark: #004d99;
+
+    --accent-green: #228b22;
+    --accent-green-light: #32cd32;
+    --accent-green-dark: #196619;
+
+    --accent-orange: #e68a00;
+    --accent-orange-light: #ffa500;
+    --accent-orange-dark: #cc7a00;
+
+    --accent-red: #cc3333;
+    --accent-red-light: #ff4444;
+    --accent-red-dark: #aa2222;
+
+    --accent-purple: #7c3aed;
+    --accent-yellow: #d97706;
+
+    --color-success: var(--accent-green);
+    --color-warning: var(--accent-orange);
+    --color-error: var(--accent-red);
+    --color-info: var(--accent-blue);
+
+    --border-default: rgba(0, 0, 0, 0.15);
+    --border-light: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.25);
+    --border-focus: var(--accent-blue);
+    --border-error: var(--accent-red);
+    --border-success: var(--accent-green);
+
+    --selection-bg: #b3d7ff;
+    --selection-text: #1a1a1a;
+    --highlight-match: #e0e0e0;
+    --highlight-match-active: #b3d7ff;
+
+    --surface-1: var(--bg-secondary);
+    --surface-2: var(--bg-tertiary);
+    --surface-3: #c0c0c0;
+
+    --grid-color: rgba(0, 0, 0, 0.04);
+    --grid-major: rgba(0, 0, 0, 0.08);
+    --guide-color: rgba(0, 102, 204, 0.2);
+
+    --canvas-bg: #f0f0f0;
+    --canvas-grid-rgb: 0, 0, 0;
+    --canvas-text: #1a1a1a;
+
+    --minimap-blip: #cc3333;
+    --minimap-viewport-stroke: #333333;
+    --minimap-viewport-fill: rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme specific overrides */
+[data-theme="light"] .canvas-text-input {
+    background: rgba(255, 255, 255, 0.85);
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .canvas-text-input:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--accent-blue);
+}
+
+[data-theme="light"] .canvas-text-input::placeholder {
+    color: #aaaaaa;
+}
+
+[data-theme="light"] .calculation-result {
+    background: rgba(34, 139, 34, 0.12);
+    border-color: rgba(34, 139, 34, 0.3);
+    color: #196619;
+}
+
+[data-theme="light"] .syntax-comment {
+    color: #888888;
+}
+
+[data-theme="light"] .syntax-hashtag {
+    color: #7c3aed;
+}
+
+[data-theme="light"] .syntax-negative {
+    color: #cc3333;
+}
+
+[data-theme="light"] #minimap-container {
+    background: rgba(240, 240, 240, 0.9);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .escape-hold-overlay {
+    background: rgba(245, 245, 245, 0.95);
+}
+
+[data-theme="light"] .share-toast {
+    background: rgba(245, 245, 245, 0.95);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .recenter-button {
+    background: rgba(220, 220, 220, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #333333;
+}
+
+[data-theme="light"] .recenter-button:hover {
+    background: rgba(200, 200, 200, 0.9);
+}
+
+[data-theme="light"] .loading-screen {
+    background: #f5f5f5;
+}
+
+[data-theme="light"] .loading-logo .logo-minus,
+[data-theme="light"] .loading-logo .logo-plus {
+    color: var(--text-primary);
 }
 
 /* High Contrast Dark Theme */
@@ -85,6 +226,24 @@
     --highlight-result: rgba(0, 255, 0, 0.5);
 
     --grid-color: rgba(255, 255, 255, 0.1);
+
+    --canvas-bg: #000000;
+    --canvas-grid-rgb: 255, 255, 255;
+}
+
+/* View Transitions for Theme Toggle */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+/* Ensure new theme is always on top during transition to cover the old one */
+::view-transition-new(root) {
+    z-index: 2147483646;
+}
+::view-transition-old(root) {
+    z-index: 2147483645;
 }
 
 /* Blue Dark Theme */
