@@ -138,6 +138,74 @@ class TextManager {
             }
         });
 
+        // Drag and Drop (Snap to 30px Grid)
+        let isDraggingBox = false;
+        let dragStartX = 0, dragStartY = 0;
+        let boxStartWorldX = 0, boxStartWorldY = 0;
+
+        input.addEventListener('pointerdown', (e) => {
+            // Initiate drag if clicking near left edge or holding Alt/Cmd
+            if (e.offsetX < 15 || e.altKey || e.metaKey) {
+                isDraggingBox = true;
+                const element = this.textElements.get(id);
+                if (element) {
+                    boxStartWorldX = element.worldX;
+                    boxStartWorldY = element.worldY;
+                }
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                
+                input.style.cursor = 'grabbing';
+                input.setPointerCapture(e.pointerId);
+                e.preventDefault(); // Prevent text selection
+            }
+        });
+
+        input.addEventListener('pointermove', (e) => {
+            if (!isDraggingBox) {
+                // Visual affordance for grab handle
+                input.style.cursor = e.offsetX < 15 && document.activeElement !== input ? 'grab' : '';
+                return;
+            }
+
+            const zoom = this.canvas.viewport.zoom;
+            // Calculate pan in world coordinates
+            const deltaX = (e.clientX - dragStartX) / zoom;
+            const deltaY = (e.clientY - dragStartY) / zoom;
+
+            // Apply grid snapping (30px matches base grid in canvas.js)
+            const gridSize = 30;
+            const newWorldX = Math.round((boxStartWorldX + deltaX) / gridSize) * gridSize;
+            const newWorldY = Math.round((boxStartWorldY + deltaY) / gridSize) * gridSize;
+
+            const element = this.textElements.get(id);
+            if (element && (element.worldX !== newWorldX || element.worldY !== newWorldY)) {
+                element.worldX = newWorldX;
+                element.worldY = newWorldY;
+                this.updateElementPosition(element);
+                
+                // Sync syntax overlay bounds immediately
+                if (this.syntaxHighlighter) {
+                    this.syntaxHighlighter.sync(id);
+                }
+
+                // Show minimap
+                if (window.canvasApp && window.canvasApp.minimap) {
+                    window.canvasApp.minimap.show();
+                }
+            }
+        });
+
+        input.addEventListener('pointerup', (e) => {
+            if (isDraggingBox) {
+                isDraggingBox = false;
+                input.releasePointerCapture(e.pointerId);
+                input.style.cursor = '';
+                
+                if (window.canvasApp) window.canvasApp.markDirty(); // Trigger auto-save
+            }
+        });
+
         // Focus handlers
         input.addEventListener('focus', () => {
             this.activeInput = input;

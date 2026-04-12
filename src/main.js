@@ -8,6 +8,7 @@ import ClipboardManager from './core/clipboardManager.js';
 import SyntaxHighlighter from './core/syntaxHighlighter.js';
 import TextHighlighter from './utils/highlighter.js';
 import StorageManager from './utils/storage.js';
+import Minimap from './core/minimap.js';
 
 class MinusPlusApp {
     constructor() {
@@ -29,6 +30,7 @@ class MinusPlusApp {
             this.clipboardManager = new ClipboardManager();
             this.highlighter = new TextHighlighter();
             this.storage = new StorageManager();
+            this.minimap = new Minimap(this);
             // Hide help indicator after first interaction
             this.setupHelpIndicator();
             // Setup event coordination
@@ -328,6 +330,7 @@ class MinusPlusApp {
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, true); // true = mobile
                                 this.textManager.onCanvasTransform();
+                                if (this.minimap) this.minimap.show();
                             }
 
                             lastTouchPos = { ...currentTouchPos };
@@ -355,6 +358,7 @@ class MinusPlusApp {
 
                 // Update text element positions after zoom
                 this.textManager.onCanvasTransform();
+                if (this.minimap) this.minimap.show();
 
                 lastPinchDistance = currentPinchDistance;
                 this.trackZoomDebounced();
@@ -378,6 +382,7 @@ class MinusPlusApp {
                 if (hasMoved) {
                     this.canvas.startMomentum(() => {
                         this.textManager.onCanvasTransform();
+                        if (this.minimap) this.minimap.show();
                     }, true); // isMobile = true
                 }
 
@@ -426,6 +431,7 @@ class MinusPlusApp {
 
             // Update text element positions after zoom
             this.textManager.onCanvasTransform();
+            if (this.minimap) this.minimap.show();
             this.trackZoomDebounced();
         });
 
@@ -479,6 +485,7 @@ class MinusPlusApp {
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, false); // false = desktop
                                 this.textManager.onCanvasTransform();
+                                if (this.minimap) this.minimap.show();
 
                                 // Accumulate pan distance
                                 panDistance += Math.hypot(deltaX, deltaY);
@@ -506,6 +513,7 @@ class MinusPlusApp {
                 // Start momentum scrolling
                 this.canvas.startMomentum(() => {
                     this.textManager.onCanvasTransform();
+                    if (this.minimap) this.minimap.show();
                 }, false); // isMobile = false
 
                 // Track pan once when drag ends
