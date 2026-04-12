@@ -8,6 +8,7 @@ import ClipboardManager from './core/clipboardManager.js';
 import SyntaxHighlighter from './core/syntaxHighlighter.js';
 import TextHighlighter from './utils/highlighter.js';
 import StorageManager from './utils/storage.js';
+import Minimap from './core/minimap.js';
 
 class MinusPlusApp {
     constructor() {
@@ -29,6 +30,7 @@ class MinusPlusApp {
             this.clipboardManager = new ClipboardManager();
             this.highlighter = new TextHighlighter();
             this.storage = new StorageManager();
+            this.minimap = new Minimap(this);
             // Hide help indicator after first interaction
             this.setupHelpIndicator();
             // Setup event coordination
@@ -328,6 +330,7 @@ class MinusPlusApp {
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, true); // true = mobile
                                 this.textManager.onCanvasTransform();
+                                if (this.minimap) this.minimap.show();
                             }
 
                             lastTouchPos = { ...currentTouchPos };
@@ -355,6 +358,7 @@ class MinusPlusApp {
 
                 // Update text element positions after zoom
                 this.textManager.onCanvasTransform();
+                if (this.minimap) this.minimap.show();
 
                 lastPinchDistance = currentPinchDistance;
                 this.trackZoomDebounced();
@@ -378,6 +382,7 @@ class MinusPlusApp {
                 if (hasMoved) {
                     this.canvas.startMomentum(() => {
                         this.textManager.onCanvasTransform();
+                        if (this.minimap) this.minimap.show();
                     }, true); // isMobile = true
                 }
 
@@ -426,6 +431,7 @@ class MinusPlusApp {
 
             // Update text element positions after zoom
             this.textManager.onCanvasTransform();
+            if (this.minimap) this.minimap.show();
             this.trackZoomDebounced();
         });
 
@@ -479,6 +485,7 @@ class MinusPlusApp {
                             if (Math.abs(deltaX) > 0.01 || Math.abs(deltaY) > 0.01) {
                                 this.canvas.pan(deltaX, deltaY, false); // false = desktop
                                 this.textManager.onCanvasTransform();
+                                if (this.minimap) this.minimap.show();
 
                                 // Accumulate pan distance
                                 panDistance += Math.hypot(deltaX, deltaY);
@@ -506,6 +513,7 @@ class MinusPlusApp {
                 // Start momentum scrolling
                 this.canvas.startMomentum(() => {
                     this.textManager.onCanvasTransform();
+                    if (this.minimap) this.minimap.show();
                 }, false); // isMobile = false
 
                 // Track pan once when drag ends
@@ -692,6 +700,9 @@ class MinusPlusApp {
 
         // Recenter button functionality
         this.setupRecenterButton();
+
+        // Share button functionality
+        this.setupShareButton();
     }
 
     setupHelpIndicator() {
@@ -700,6 +711,7 @@ class MinusPlusApp {
         this.shortcutsPopup = document.querySelector('#shortcuts-popup');
         this.clearAllButton = document.querySelector('#clear-all-btn');
         this.recenterButton = document.querySelector('#recenter-btn');
+        this.shareButton = document.querySelector('#share-btn');
 
         console.log('Elements found in setupHelpIndicator:');
         console.log('- Help indicator:', !!this.helpIndicator);
@@ -766,6 +778,120 @@ class MinusPlusApp {
                 this.hideShortcutsPopup();
             }
         });
+
+        // Theme toggle
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        if (themeToggleBtn) {
+            // Restore saved theme
+            const savedTheme = localStorage.getItem('minusplus_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggleBtn.textContent = '🌙 Dark';
+            }
+
+            themeToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                const newTheme = isLight ? 'dark' : 'light';
+
+                // Function to actually perform the theme switch
+                const switchTheme = () => {
+                    if (newTheme === 'light') {
+                        document.documentElement.setAttribute('data-theme', 'light');
+                        themeToggleBtn.textContent = '🌙 Dark';
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                        themeToggleBtn.textContent = '☀️ Light';
+                    }
+                    localStorage.setItem('minusplus_theme', newTheme);
+                    this.canvas.render(); // Re-render canvas with new colors
+                };
+
+                // Use the modern View Transitions API if supported
+                if (!document.startViewTransition) {
+                    switchTheme();
+                    this.track('theme_toggle', { theme: newTheme });
+                    return;
+                }
+
+                // Get button position for the reveal origin
+                const rect = themeToggleBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+
+                // Max radius to cover the full screen
+                const maxRadius = Math.ceil(
+                    Math.sqrt(
+                        Math.max(x, window.innerWidth - x) ** 2 +
+                        Math.max(y, window.innerHeight - y) ** 2
+                    )
+                );
+
+                // Start the transition
+                const transition = document.startViewTransition(() => {
+                    switchTheme();
+                });
+
+                // Wait for the pseudo-elements to be created, then animate them
+                transition.ready.then(() => {
+                    // We animate the ::view-transition-new(root) pseudo-element
+                    // to clip from 0 out to the max screen radius.
+                    // This creates a seamless "portal" revealing the actual new canvas underneath.
+                    document.documentElement.animate(
+                        {
+                            clipPath: [
+                                `circle(0px at ${x}px ${y}px)`,
+                                `circle(${maxRadius}px at ${x}px ${y}px)`
+                            ],
+                        },
+                        {
+                            duration: 1000, // Slightly longer, gives the eye more time to appreciate 120Hz
+                            easing: 'cubic-bezier(0.22, 1, 0.36, 1)', // Super-smooth cinematic ease-out
+                            pseudoElement: '::view-transition-new(root)',
+                        }
+                    );
+                });
+
+                this.track('theme_toggle', { theme: newTheme });
+            });
+        }
+
+        // Grid style toggle
+        const gridToggleBtn = document.getElementById('grid-toggle-btn');
+        if (gridToggleBtn) {
+            const gridStyles = ['lines', 'dots', 'crosses'];
+            const gridLabels = {
+                'lines': '▦ Lines',
+                'dots': '∷ Dots',
+                'crosses': '➕ Crosses'
+            };
+
+            // Restore saved grid style
+            const savedGrid = localStorage.getItem('minusplus_grid') || 'lines';
+            if (this.canvas) {
+                this.canvas.gridStyle = savedGrid;
+            }
+            gridToggleBtn.textContent = gridLabels[savedGrid];
+
+            gridToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Get current and next grid style
+                const currentGrid = this.canvas.gridStyle || 'lines';
+                const nextIndex = (gridStyles.indexOf(currentGrid) + 1) % gridStyles.length;
+                const nextGrid = gridStyles[nextIndex];
+                
+                // Update canvas and button
+                this.canvas.gridStyle = nextGrid;
+                gridToggleBtn.textContent = gridLabels[nextGrid];
+                localStorage.setItem('minusplus_grid', nextGrid);
+                
+                // Re-render canvas
+                this.canvas.render();
+                this.track('grid_toggle', { style: nextGrid });
+            });
+        }
     }
 
     setupRecenterButton() {
@@ -843,6 +969,7 @@ class MinusPlusApp {
             // Hide action buttons
             this.clearAllButton.classList.remove('visible');
             this.shortcutsButton.classList.remove('visible');
+            if (this.shareButton) this.shareButton.classList.remove('visible');
 
             console.log(`Cleared ${clearedCount} calculations`);
         }
@@ -860,6 +987,9 @@ class MinusPlusApp {
             }
             if (this.clearAllButton) {
                 this.clearAllButton.classList.remove('visible');
+            }
+            if (this.shareButton) {
+                this.shareButton.classList.remove('visible');
             }
         }
     }
@@ -904,6 +1034,9 @@ class MinusPlusApp {
             if (this.recenterButton) {
                 this.recenterButton.classList.add('visible');
             }
+            if (this.shareButton) {
+                this.shareButton.classList.add('visible');
+            }
 
             setTimeout(() => {
                 this.helpIndicator.style.display = 'none';
@@ -913,6 +1046,12 @@ class MinusPlusApp {
 
     async loadPreviousState() {
         try {
+            // Check for shared state in URL hash first
+            const sharedState = this.loadSharedState();
+            if (sharedState) {
+                return; // Shared state was loaded, don't load local state
+            }
+
             const state = this.storage.loadCanvasState();
             if (state && state.elements && state.elements.length > 0) {
                 this.canvas.setState(state.viewport);
@@ -940,6 +1079,121 @@ class MinusPlusApp {
             this.canvas.resetView();
             this.track('app_ready', { restored: false, error: true });
         }
+    }
+
+    setupShareButton() {
+        if (!this.shareButton) return;
+
+        this.shareButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.shareCanvas();
+        });
+    }
+
+    shareCanvas() {
+        const elements = this.textManager.getElements();
+        if (!elements || elements.length === 0) {
+            this.showToast('Nothing to share — add some calculations first!');
+            return;
+        }
+
+        // Compact format: store position, text, and dimensions
+        const shareData = elements.map(el => ({
+            x: Math.round(el.worldX),
+            y: Math.round(el.worldY),
+            t: el.text,
+            w: el.width || 120,
+            h: el.height || 40,
+            ws: el.whiteSpace || 'nowrap',
+            ox: el.overflowX || 'auto',
+            oy: el.overflowY || 'hidden'
+        }));
+
+        try {
+            const json = JSON.stringify(shareData);
+            const encoded = btoa(unescape(encodeURIComponent(json)));
+            const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                this.showToast('✓ Link copied! Share it with anyone.');
+                this.track('share', { elements: elements.length, urlLength: url.length });
+            }).catch(() => {
+                // Fallback for older browsers
+                this.showToast('✓ Link ready — copy from the address bar.');
+                window.location.hash = `share=${encoded}`;
+            });
+        } catch (error) {
+            console.error('Share failed:', error);
+            this.showToast('Could not generate share link.');
+        }
+    }
+
+    loadSharedState() {
+        const hash = window.location.hash;
+        if (!hash || !hash.startsWith('#share=')) return false;
+
+        try {
+            const encoded = hash.substring(7); // Remove '#share='
+            const json = decodeURIComponent(escape(atob(encoded)));
+            const shareData = JSON.parse(json);
+
+            if (!Array.isArray(shareData) || shareData.length === 0) return false;
+
+            // Convert compact format back to element format
+            const elements = shareData.map((el, i) => ({
+                id: i,
+                worldX: el.x || 0,
+                worldY: el.y || 0,
+                text: el.t || '',
+                width: el.w || 120,
+                height: el.h || 40,
+                whiteSpace: el.ws || 'nowrap',
+                overflowX: el.ox || 'auto',
+                overflowY: el.oy || 'hidden'
+            }));
+
+            // Reset view and restore shared elements
+            this.canvas.resetView();
+            this.textManager.restoreElements(elements);
+            this.hideHelpIndicator();
+
+            // Clean the URL without reloading
+            history.replaceState(null, '', window.location.pathname);
+
+            this.showToast(`Loaded shared canvas (${elements.length} items)`);
+            this.track('share_loaded', { elements: elements.length });
+
+            console.log(`Loaded ${elements.length} shared elements`);
+            return true;
+        } catch (error) {
+            console.warn('Failed to load shared state:', error);
+            // Clean the bad hash
+            history.replaceState(null, '', window.location.pathname);
+            return false;
+        }
+    }
+
+    showToast(message) {
+        // Remove any existing toast
+        const existing = document.querySelector('.share-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'share-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Show
+        requestAnimationFrame(() => {
+            toast.classList.add('visible');
+        });
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     saveState() {
