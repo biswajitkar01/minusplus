@@ -846,8 +846,8 @@ class MinusPlusApp {
                             ],
                         },
                         {
-                            duration: 700,
-                            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                            duration: 1000, // Slightly longer, gives the eye more time to appreciate 120Hz
+                            easing: 'cubic-bezier(0.22, 1, 0.36, 1)', // Super-smooth cinematic ease-out
                             pseudoElement: '::view-transition-new(root)',
                         }
                     );
