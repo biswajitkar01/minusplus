@@ -316,15 +316,80 @@ body {
     display: flex;
 }
 
+/* Share button */
+.share-button {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: calc(var(--spacing-lg) + 100px);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    cursor: pointer;
+    z-index: 9999;
+    transition: all var(--transition-fast);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    pointer-events: auto;
+}
+
+.share-button:hover {
+    background: rgba(58, 58, 58, 0.9);
+    transform: scale(1.1);
+}
+
+.share-button:active {
+    transform: scale(0.95);
+}
+
+.share-button.visible {
+    display: flex;
+}
+
+/* Share toast notification */
+.share-toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-mono);
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-lg);
+}
+
+.share-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
 /* Mobile responsive layout for buttons */
 @media (max-width: 768px) {
-    .clear-all-button {
+    .shortcuts-button {
         top: 16px;
         right: 16px;
     }
 
-    .shortcuts-button {
-        top: 70px;
+    .clear-all-button {
+        top: 62px;
+        right: 16px;
+    }
+
+    .share-button {
+        top: 108px;
         right: 16px;
     }
 

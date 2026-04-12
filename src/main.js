@@ -700,6 +700,9 @@ class MinusPlusApp {
 
         // Recenter button functionality
         this.setupRecenterButton();
+
+        // Share button functionality
+        this.setupShareButton();
     }
 
     setupHelpIndicator() {
@@ -708,6 +711,7 @@ class MinusPlusApp {
         this.shortcutsPopup = document.querySelector('#shortcuts-popup');
         this.clearAllButton = document.querySelector('#clear-all-btn');
         this.recenterButton = document.querySelector('#recenter-btn');
+        this.shareButton = document.querySelector('#share-btn');
 
         console.log('Elements found in setupHelpIndicator:');
         console.log('- Help indicator:', !!this.helpIndicator);
@@ -851,6 +855,7 @@ class MinusPlusApp {
             // Hide action buttons
             this.clearAllButton.classList.remove('visible');
             this.shortcutsButton.classList.remove('visible');
+            if (this.shareButton) this.shareButton.classList.remove('visible');
 
             console.log(`Cleared ${clearedCount} calculations`);
         }
@@ -868,6 +873,9 @@ class MinusPlusApp {
             }
             if (this.clearAllButton) {
                 this.clearAllButton.classList.remove('visible');
+            }
+            if (this.shareButton) {
+                this.shareButton.classList.remove('visible');
             }
         }
     }
@@ -912,6 +920,9 @@ class MinusPlusApp {
             if (this.recenterButton) {
                 this.recenterButton.classList.add('visible');
             }
+            if (this.shareButton) {
+                this.shareButton.classList.add('visible');
+            }
 
             setTimeout(() => {
                 this.helpIndicator.style.display = 'none';
@@ -921,6 +932,12 @@ class MinusPlusApp {
 
     async loadPreviousState() {
         try {
+            // Check for shared state in URL hash first
+            const sharedState = this.loadSharedState();
+            if (sharedState) {
+                return; // Shared state was loaded, don't load local state
+            }
+
             const state = this.storage.loadCanvasState();
             if (state && state.elements && state.elements.length > 0) {
                 this.canvas.setState(state.viewport);
@@ -948,6 +965,121 @@ class MinusPlusApp {
             this.canvas.resetView();
             this.track('app_ready', { restored: false, error: true });
         }
+    }
+
+    setupShareButton() {
+        if (!this.shareButton) return;
+
+        this.shareButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.shareCanvas();
+        });
+    }
+
+    shareCanvas() {
+        const elements = this.textManager.getElements();
+        if (!elements || elements.length === 0) {
+            this.showToast('Nothing to share — add some calculations first!');
+            return;
+        }
+
+        // Compact format: store position, text, and dimensions
+        const shareData = elements.map(el => ({
+            x: Math.round(el.worldX),
+            y: Math.round(el.worldY),
+            t: el.text,
+            w: el.width || 120,
+            h: el.height || 40,
+            ws: el.whiteSpace || 'nowrap',
+            ox: el.overflowX || 'auto',
+            oy: el.overflowY || 'hidden'
+        }));
+
+        try {
+            const json = JSON.stringify(shareData);
+            const encoded = btoa(unescape(encodeURIComponent(json)));
+            const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                this.showToast('✓ Link copied! Share it with anyone.');
+                this.track('share', { elements: elements.length, urlLength: url.length });
+            }).catch(() => {
+                // Fallback for older browsers
+                this.showToast('✓ Link ready — copy from the address bar.');
+                window.location.hash = `share=${encoded}`;
+            });
+        } catch (error) {
+            console.error('Share failed:', error);
+            this.showToast('Could not generate share link.');
+        }
+    }
+
+    loadSharedState() {
+        const hash = window.location.hash;
+        if (!hash || !hash.startsWith('#share=')) return false;
+
+        try {
+            const encoded = hash.substring(7); // Remove '#share='
+            const json = decodeURIComponent(escape(atob(encoded)));
+            const shareData = JSON.parse(json);
+
+            if (!Array.isArray(shareData) || shareData.length === 0) return false;
+
+            // Convert compact format back to element format
+            const elements = shareData.map((el, i) => ({
+                id: i,
+                worldX: el.x || 0,
+                worldY: el.y || 0,
+                text: el.t || '',
+                width: el.w || 120,
+                height: el.h || 40,
+                whiteSpace: el.ws || 'nowrap',
+                overflowX: el.ox || 'auto',
+                overflowY: el.oy || 'hidden'
+            }));
+
+            // Reset view and restore shared elements
+            this.canvas.resetView();
+            this.textManager.restoreElements(elements);
+            this.hideHelpIndicator();
+
+            // Clean the URL without reloading
+            history.replaceState(null, '', window.location.pathname);
+
+            this.showToast(`Loaded shared canvas (${elements.length} items)`);
+            this.track('share_loaded', { elements: elements.length });
+
+            console.log(`Loaded ${elements.length} shared elements`);
+            return true;
+        } catch (error) {
+            console.warn('Failed to load shared state:', error);
+            // Clean the bad hash
+            history.replaceState(null, '', window.location.pathname);
+            return false;
+        }
+    }
+
+    showToast(message) {
+        // Remove any existing toast
+        const existing = document.querySelector('.share-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'share-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Show
+        requestAnimationFrame(() => {
+            toast.classList.add('visible');
+        });
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     saveState() {
