@@ -4,3 +4,10 @@ WARP.md
 node_modules/
 dist/
 *.zip
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

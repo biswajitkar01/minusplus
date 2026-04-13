@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 /**
  * Vite plugin to make the build output work from file:// protocol.
  * - Removes type="module" and crossorigin attributes from script tags
@@ -104,5 +106,5 @@ export default defineConfig({
             },
         },
     },
-    plugins: [portablePlugin()],
+    plugins: [portablePlugin(), cloudflare()],
 });

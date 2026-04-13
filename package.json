@@ -1,50 +1,53 @@
 {
-    "name": "minusplus-calculator",
-    "version": "1.3.0",
-    "description": "Revolutionary calculator with infinite dark canvas interface",
-    "type": "module",
-    "main": "src/main.js",
-    "scripts": {
-        "dev": "python3 -m http.server 8000",
-        "dev-src": "cd src && python3 -m http.server 8000",
-        "build": "echo 'No build step needed for vanilla JS' && exit 0",
-        "build:portable": "vite build",
-        "deploy": "git add . && git commit -m 'Deploy to GitHub Pages' && git push origin main",
-        "serve": "python3 -m http.server 8000",
-        "test": "echo 'No tests yet' && exit 0",
-        "lint": "echo 'No linting configured yet' && exit 0",
-        "format": "echo 'No formatting configured yet' && exit 0"
-    },
-    "keywords": [
-        "calculator",
-        "infinite-canvas",
-        "dark-theme",
-        "vanilla-javascript",
-        "high-performance",
-        "auto-calculation",
-        "clipboard",
-        "text-highlighting"
-    ],
-    "author": "MinusPlus Team",
-    "license": "MIT",
-    "homepage": "https://minusplus.app",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/biswajitkar01/minusplus.git"
-    },
-    "bugs": {
-        "url": "https://github.com/biswajitkar01/minusplus/issues"
-    },
-    "devDependencies": {
-        "vite": "^6.0.0"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    },
-    "browserslist": [
-        "last 2 Chrome versions",
-        "last 2 Firefox versions",
-        "last 2 Safari versions",
-        "last 2 Edge versions"
-    ]
+  "name": "minusplus-calculator",
+  "version": "1.3.0",
+  "description": "Revolutionary calculator with infinite dark canvas interface",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "dev-src": "cd src && python3 -m http.server 8000",
+    "build": "echo 'No build step needed for vanilla JS' && exit 0",
+    "build:portable": "vite build",
+    "deploy": "npm run build:portable && wrangler deploy",
+    "serve": "python3 -m http.server 8000",
+    "test": "echo 'No tests yet' && exit 0",
+    "lint": "echo 'No linting configured yet' && exit 0",
+    "format": "echo 'No formatting configured yet' && exit 0",
+    "preview": "npm run build:portable && wrangler dev"
+  },
+  "keywords": [
+    "calculator",
+    "infinite-canvas",
+    "dark-theme",
+    "vanilla-javascript",
+    "high-performance",
+    "auto-calculation",
+    "clipboard",
+    "text-highlighting"
+  ],
+  "author": "MinusPlus Team",
+  "license": "MIT",
+  "homepage": "https://minusplus.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/biswajitkar01/minusplus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/biswajitkar01/minusplus/issues"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.31.2",
+    "vite": "^6.0.0",
+    "wrangler": "^4.81.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ]
 }
