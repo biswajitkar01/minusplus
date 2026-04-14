@@ -86,7 +86,6 @@ class MinusPlusApp {
             this.createTypingSequence(examples);
         }
 
-        this.track('welcome_example', { method: 'default_set', layout: isMobile ? 'mobile' : 'desktop' });
     }
 
     createTypingSequence(examples) {
@@ -179,11 +178,6 @@ class MinusPlusApp {
     }
 
     setupEventHandlers() {
-        // Debounced zoom tracking
-        this.trackZoomDebounced = this.debounce(() => {
-            const vp = this.canvas.getViewport?.();
-            if (vp) this.track('zoom', { zoom: Number(vp.zoom?.toFixed?.(3) || vp.zoom || 1) });
-        }, 300);
 
         // Mouse click vs drag detection
         let mouseDownPos = null;
@@ -225,9 +219,6 @@ class MinusPlusApp {
                     this.textManager.createTextInput(worldPos.x, worldPos.y);
                     this.hideHelpIndicator();
                     this.markDirty();
-                    // Analytics
-                    const vp = this.canvas.getViewport?.();
-                    this.track('input_created', { method: 'click', zoom: vp?.zoom });
                 }
 
                 mouseDownPos = null;
@@ -361,7 +352,7 @@ class MinusPlusApp {
                 if (this.minimap) this.minimap.show();
 
                 lastPinchDistance = currentPinchDistance;
-                this.trackZoomDebounced();
+
                 e.preventDefault();
             }
         }, { passive: false });
@@ -409,9 +400,6 @@ class MinusPlusApp {
                     this.textManager.createTextInput(worldPos.x, worldPos.y);
                     this.hideHelpIndicator();
                     this.markDirty();
-                    // Analytics
-                    const vp = this.canvas.getViewport?.();
-                    this.track('input_created', { method: 'tap', zoom: vp?.zoom });
                 }
                 e.preventDefault();
             } else if (e.touches.length < 2) {
@@ -432,7 +420,7 @@ class MinusPlusApp {
             // Update text element positions after zoom
             this.textManager.onCanvasTransform();
             if (this.minimap) this.minimap.show();
-            this.trackZoomDebounced();
+
         });
 
         // Mouse drag - simple click and drag panning
@@ -516,11 +504,7 @@ class MinusPlusApp {
                     if (this.minimap) this.minimap.show();
                 }, false); // isMobile = false
 
-                // Track pan once when drag ends
-                if (panDistance > 0) {
-                    this.track('pan', { distance: Math.round(panDistance) });
-                    panDistance = 0;
-                }
+                panDistance = 0;
             }
 
             // Reset all mouse tracking
@@ -1017,7 +1001,7 @@ class MinusPlusApp {
         console.log('Hiding shortcuts popup');
         this.shortcutsPopup.classList.remove('visible');
         this.shortcutsPopup.classList.add('hidden');
-        this.track('shortcuts_popup', { action: 'hide' });
+
     }
 
     hideHelpIndicator() {
