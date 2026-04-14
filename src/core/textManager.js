@@ -210,6 +210,7 @@ class TextManager {
         input.addEventListener('focus', () => {
             this.activeInput = input;
             input.style.borderColor = 'var(--accent-blue)';
+            input.dataset.focusValue = input.value; // Store value to check for changes on blur
 
             // Show delete button for this input
             const element = this.textElements.get(id);
@@ -230,10 +231,23 @@ class TextManager {
 
             // Hide delete button when input loses focus (with delay to allow clicking it)
             const element = this.textElements.get(id);
-            if (element && element.deleteBtn) {
-                setTimeout(() => {
-                    element.deleteBtn.classList.remove('active');
-                }, 200);
+            if (element) {
+                // Track completed calculations if value changed
+                if (element.calculation && input.value.trim() && input.value !== input.dataset.focusValue) {
+                    if (window.canvasApp) {
+                        window.canvasApp.track('calculation_performed', {
+                            calc_type: element.calculation.type || 'math',
+                            lines: input.value.split('\n').length
+                        });
+                    }
+                    input.dataset.focusValue = input.value; // Update so we don't double track
+                }
+
+                if (element.deleteBtn) {
+                    setTimeout(() => {
+                        element.deleteBtn.classList.remove('active');
+                    }, 200);
+                }
             }
 
             // Remove empty inputs immediately when they lose focus

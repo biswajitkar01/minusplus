@@ -610,7 +610,7 @@ class MinusPlusApp {
                 this.canvas.resetView();
                 this.textManager.onCanvasTransform?.();
                 this.highlighter.updateHighlightPositions?.();
-                this.track('reset_view', { source: 'keyboard' });
+                this.track('reset_view', { trigger_type: 'keyboard' });
                 return false;
             }
 
@@ -891,7 +891,7 @@ class MinusPlusApp {
             this.canvas.resetView();
             this.textManager.onCanvasTransform?.();
             this.highlighter.updateHighlightPositions?.();
-            this.track('reset_view', { source: 'button' });
+            this.track('reset_view', { trigger_type: 'button' });
         });
     }
 
