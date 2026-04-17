@@ -441,29 +441,53 @@ class CalculationEngine {
 
     // Calculate result from parsed elements
     calculateFromElements(elements) {
-        // Calculate the result
-        let result = 0;
+        // Output operation and numbers arrays
         let operation = 'addition';
         const numbers = [];
 
         for (const element of elements) {
             numbers.push(element.value);
+        }
 
-            if (element.operator === '+') {
-                result += element.value;
-            } else if (element.operator === '-') {
-                result -= element.value;
-                operation = numbers.length === 1 ? 'subtraction' : 'mixed';
-            } else if (element.operator === '*' || element.operator === '×') {
-                result *= element.value;
-                operation = numbers.length === 1 ? 'multiplication' : 'mixed';
-            } else if (element.operator === '/' || element.operator === '÷') {
-                if (element.value !== 0) {
-                    result /= element.value;
-                    operation = numbers.length === 1 ? 'division' : 'mixed';
+        // Pass 1: Handle multiplication and division (BODMAS)
+        let stack = [];
+        for (let i = 0; i < elements.length; i++) {
+            const current = { ...elements[i] };
+            
+            if (current.operator === '*' || current.operator === '×') {
+                if (stack.length > 0) {
+                    const prev = stack[stack.length - 1]; // modify in-place
+                    prev.value *= current.value;
+                } else {
+                    current.value = 0; // 0 * x = 0
+                    stack.push(current);
+                }
+            } else if (current.operator === '/' || current.operator === '÷') {
+                if (current.value !== 0) {
+                    if (stack.length > 0) {
+                        const prev = stack[stack.length - 1];
+                        prev.value /= current.value;
+                    } else {
+                        current.value = 0; // 0 / x = 0
+                        stack.push(current);
+                    }
                 } else {
                     return { numbers: [], result: NaN, operation: 'error' };
                 }
+            } else {
+                stack.push(current);
+            }
+        }
+
+        // Pass 2: Handle addition and subtraction
+        let result = 0;
+        for (const element of stack) {
+            if (element.operator === '+' || !element.operator) {
+                result += element.value;
+            } else if (element.operator === '-') {
+                result -= element.value;
+            } else {
+                result += element.value; // Fallback
             }
         }
 
@@ -474,6 +498,13 @@ class CalculationEngine {
             operation = 'subtraction';
         } else if (elements.length > 1) {
             operation = 'mixed';
+        } else if (elements.length === 1) {
+            // handle edge case where single element operation could be tracked differently
+            if (elements[0].operator === '-') {
+                operation = 'subtraction';
+            } else {
+                operation = 'addition';
+            }
         }
 
         return {
